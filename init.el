@@ -1,5 +1,5 @@
-(setq package-archives '(("gnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-			            ("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+(setq package-archives '(("gnu" . "https://mirrors4.tuna.tsinghua.edu.cn/elpa/gnu/")
+			            ("melpa" . "https://mirrors4.tuna.tsinghua.edu.cn/elpa/melpa/")))
 (package-initialize)
 (custom-set-variables
  '(ansi-color-faces-vector
@@ -9,10 +9,12 @@
  '(blink-cursor-mode nil)
  '(inhibit-startup-screen t)
  '(line-number-mode nil)
- '(menu-bar-mode nil)
- '(package-selected-packages (quote (flycheck-haskell intero company-coq proof-general)))
- '(scroll-bar-mode nil)
  '(make-backup-files nil)
+ '(menu-bar-mode nil)
+ '(package-selected-packages
+   (quote
+    (geiser flycheck-haskell intero company-coq proof-general)))
+ '(scroll-bar-mode nil)
  '(tool-bar-mode nil))
 
 (custom-set-faces
