@@ -1,3 +1,6 @@
+;; configure auto saving directory
+(setq backup-directory-alist
+      `(("." . "~/.emacs.saves")))
 ;; mirrors.tuna.tsinghua.edu.cn
 (setq package-archives '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
 			 ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
@@ -11,6 +14,7 @@
 (add-hook 'coq-mode-hook
 	  (lambda ()
 	    (setq coq-compile-before-require t)))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
