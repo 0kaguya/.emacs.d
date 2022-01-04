@@ -7,3 +7,6 @@
 auto-save-list/
 elpa/
 custom.el
+# https connection data
+network-security.data
+transient/

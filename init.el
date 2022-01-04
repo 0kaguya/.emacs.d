@@ -29,19 +29,33 @@
  browse-url-browser-function 'browse-url-generic
  browse-url-generic-program "start"
  
- ;; Set elpa mirror to
- ;; https://mirrors.tuna.tsinghua.edu.cn
- package-archives
- '(("gnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-   ("melpa" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))
  ) ; end `setq`
 
 ;; Automatic generated config are set and loaded here.
 (setq custom-file "~/.emacs.d/custom.el")
 (load custom-file t)
 
+;; Here start the builtin package manager.
+(require 'package)
+
+;; Set elpa mirror:
+;; https://mirrors.tuna.tsinghua.edu.cn
+(setq package-archives
+      ;; https ones will prompt insecure hint.
+      '(("gnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+	("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+
+;; Fetch package list if there's not one.
+(unless (file-exists-p package-user-dir)
+  (package-refresh-contents))
+
+;; 'use-package itself need to be installed.
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
 
 ;; commented out since it's slow and
-;; people said after Emacs 27 it's not needed.
+;; people said it's not needed after Emacs 27.
 ;; (package-initialize)
-
