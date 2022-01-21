@@ -1,13 +1,15 @@
 ;; To have a clean appearance.
 (blink-cursor-mode -1)
-(line-number-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 
+;; Also display column number.
+(column-number-mode t)
+
 ;; Set window size
 (when window-system
-  (set-frame-size (selected-frame) 80 34))
+  (set-frame-size (selected-frame) 80 30))
 
 ;; Set font
 (set-face-attribute 'default nil
