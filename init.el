@@ -66,3 +66,9 @@
 ;; commented out since it's slow and
 ;; people said it's not needed after Emacs 27.
 ;; (package-initialize)
+
+;; Emulate the title bar's right-click menu
+(define-prefix-command 'keymap-titlebar-menu)
+(global-set-key (kbd "M-SPC") 'keymap-titlebar-menu)
+(define-key keymap-titlebar-menu (kbd "x") 'toggle-frame-maximized)
+(define-key keymap-titlebar-menu (kbd "c") 'save-buffers-kill-terminal)
