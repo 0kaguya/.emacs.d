@@ -7,11 +7,12 @@
 
 ;; Set font
 (set-face-attribute 'default nil
-		    :family "Monaco"
+		    ;; Sarasa font is narrow, for matching 2 char = 1 CN char.
+		    :family "Sarasa Term SC"
 		    :foundry "outline"
 		    :slant 'normal
 		    :weight 'normal
-		    :height 105
+		    :height 120
 		    :width 'normal)
 ;; commented out: it is slower to take effect
 ;; (add-to-list 'default-frame-alist
