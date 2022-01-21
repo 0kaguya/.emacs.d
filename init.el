@@ -5,6 +5,10 @@
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
 
+;; Set window size
+(when window-system
+  (set-frame-size (selected-frame) 80 34))
+
 ;; Set font
 (set-face-attribute 'default nil
 		    ;; Sarasa font is narrow, for matching 2 char = 1 CN char.
