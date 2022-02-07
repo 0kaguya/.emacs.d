@@ -72,3 +72,10 @@
 (global-set-key (kbd "M-SPC") 'keymap-titlebar-menu)
 (define-key keymap-titlebar-menu (kbd "x") 'toggle-frame-maximized)
 (define-key keymap-titlebar-menu (kbd "c") 'save-buffers-kill-terminal)
+
+;; Additional Packages
+
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
