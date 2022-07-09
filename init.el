@@ -14,11 +14,11 @@
 ;; Set font
 (set-face-attribute 'default nil
 		    ;; Sarasa font is narrow, for matching 2 char = 1 CN char.
-		    :family "Sarasa Term SC"
+		    :family "Sarasa Mono SC Nerd"
 		    :foundry "outline"
 		    :slant 'normal
 		    :weight 'normal
-		    :height 120
+		    :height 190
 		    :width 'normal)
 ;; commented out: it is slower to take effect
 ;; (add-to-list 'default-frame-alist
@@ -34,7 +34,7 @@
  
  ;; Open URLs in browser
  browse-url-browser-function 'browse-url-generic
- browse-url-generic-program "start"
+ browse-url-generic-program "start.exe`"
  
  ) ; end `setq`
 
@@ -68,10 +68,10 @@
 ;; (package-initialize)
 
 ;; Emulate the title bar's right-click menu
-(define-prefix-command 'keymap-titlebar-menu)
-(global-set-key (kbd "M-SPC") 'keymap-titlebar-menu)
-(define-key keymap-titlebar-menu (kbd "x") 'toggle-frame-maximized)
-(define-key keymap-titlebar-menu (kbd "c") 'save-buffers-kill-terminal)
+;;(define-prefix-command 'keymap-titlebar-menu)
+;;(global-set-key (kbd "M-SPC") 'keymap-titlebar-menu)
+;;(define-key keymap-titlebar-menu (kbd "x") 'toggle-frame-maximized)
+;;(define-key keymap-titlebar-menu (kbd "c") 'save-buffers-kill-terminal)
 
 ;; Additional Packages
 
