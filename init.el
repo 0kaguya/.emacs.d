@@ -79,3 +79,16 @@
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown"))
+
+(use-package racket-mode
+	    :ensure t
+	    :config
+	    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable))
+
+(setq read-quoted-char-radix 16)
+
+(use-package smartparens
+  :ensure t
+  :config
+  (add-hook 'racket-mode-hook #'smartparens-strict-mode)
+  (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
