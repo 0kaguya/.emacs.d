@@ -14,7 +14,7 @@
 ;; Set font
 (set-face-attribute 'default nil
 		    ;; Sarasa font is narrow, for matching 2 char = 1 CN char.
-		    :family "Sarasa Mono SC Nerd"
+		    :family "Sarasa Term SC"
 		    :foundry "outline"
 		    :slant 'normal
 		    :weight 'normal
