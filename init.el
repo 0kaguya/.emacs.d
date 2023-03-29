@@ -89,6 +89,8 @@
 
 (use-package smartparens
   :ensure t
+  :init
+  (require 'smartparens-config)
   :config
   (add-hook 'racket-mode-hook #'smartparens-strict-mode)
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
