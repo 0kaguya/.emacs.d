@@ -92,3 +92,11 @@
   :config
   (add-hook 'racket-mode-hook #'smartparens-strict-mode)
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
+
+(use-package haskell-mode
+  :ensure t)
+
+(use-package hindent
+  :ensure t
+  :config
+  (add-hook 'haskell-mode-hook #'hindent-mode))
