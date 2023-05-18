@@ -18,7 +18,7 @@
 		    :foundry "outline"
 		    :slant 'normal
 		    :weight 'normal
-		    :height 190
+		    :height 120
 		    :width 'normal)
 ;; commented out: it is slower to take effect
 ;; (add-to-list 'default-frame-alist
@@ -28,6 +28,7 @@
 (setq
  make-backup-files nil
  inhibit-startup-screen t
+ visible-bell 1
  
  ;; Configure auto saving directory
  backup-directory-alist `(("." . "~/.emacs.d/.cache"))
@@ -102,3 +103,7 @@
   :ensure t
   :config
   (add-hook 'haskell-mode-hook #'hindent-mode))
+
+(use-package magit
+  :ensure t)
+
