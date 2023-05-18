@@ -51,7 +51,8 @@
 (setq package-archives
       ;; https ones will prompt insecure hint.
       '(("gnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-	("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")))
+	("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+	("nongnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")))
 
 ;; Fetch package list if there's not one.
 (unless (file-exists-p package-user-dir)
@@ -63,9 +64,9 @@
 
 (eval-when-compile
   (require 'use-package))
+(require 'bind-key)
 
-;; commented out since it's slow and
-;; people said it's not needed after Emacs 27.
+;; someone said it's not needed after Emacs 27.
 ;; (package-initialize)
 
 ;; Emulate the title bar's right-click menu
@@ -106,4 +107,18 @@
 
 (use-package magit
   :ensure t)
+
+;; chinese input method
+(use-package pyim
+  :ensure t
+  :init
+  (setq default-input-method "pyim")
+  :config
+  (use-package pyim-basedict
+    :ensure t)
+  (setq-default pyim-punctuation-translate-p '(no))
+  (pyim-default-scheme 'quanpin)
+  (setq pyim-page-length 5)
+  (pyim-basedict-enable))
+
 

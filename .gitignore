@@ -11,3 +11,5 @@ custom.el
 network-security.data
 transient/
 eln-cache
+# IM cache
+pyim/
