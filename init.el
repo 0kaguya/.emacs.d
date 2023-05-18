@@ -20,7 +20,7 @@
 		    :weight 'normal
 		    :height 120
 		    :width 'normal)
-;; commented out: it is slower to take effect
+;; the older approach is slower.
 ;; (add-to-list 'default-frame-alist
 ;;              '(font . "-*-Monaco-*-*-*-mono-21-*-*-*-c-*-iso8859-1"))
 
@@ -33,11 +33,12 @@
  ;; Configure auto saving directory
  backup-directory-alist `(("." . "~/.emacs.d/.cache"))
  
- ;; Open URLs in browser
- browse-url-browser-function 'browse-url-generic
- browse-url-generic-program "start.exe`"
- 
  ) ; end `setq`
+
+;; Open URLs in browser
+(when (executable-find "wslview")
+  (setq browse-url-browser-function 'browse-url-generic
+	browse-url-generic-program "wslview"))
 
 ;; Automatic generated config are set and loaded here.
 (setq custom-file "~/.emacs.d/custom.el")
