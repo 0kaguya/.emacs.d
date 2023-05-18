@@ -29,7 +29,10 @@
  make-backup-files nil
  inhibit-startup-screen t
  visible-bell 1
- 
+
+ ;; quoted insert use hex number
+ read-quoted-char-radix 16
+
  ;; Configure auto saving directory
  backup-directory-alist `(("." . "~/.emacs.d/.cache"))
  
@@ -88,7 +91,7 @@
 	    :config
 	    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable))
 
-(setq read-quoted-char-radix 16)
+
 
 (use-package smartparens
   :ensure t
