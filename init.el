@@ -9,7 +9,7 @@
 
 ;; Set window size
 (when window-system
-  (set-frame-size (selected-frame) 80 30))
+  (set-frame-size (selected-frame) 100 40))
 
 ;; Set font
 (set-face-attribute 'default nil
