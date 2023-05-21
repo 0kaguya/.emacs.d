@@ -9,7 +9,7 @@
 
 ;; Set window size
 (when window-system
-  (set-frame-size (selected-frame) 100 40))
+  (set-frame-size (selected-frame) 100 30))
 
 ;; Set font
 (set-face-attribute 'default nil
@@ -18,7 +18,7 @@
 		    :foundry "outline"
 		    :slant 'normal
 		    :weight 'normal
-		    :height 120
+		    :height 160
 		    :width 'normal)
 ;; the older approach is slower.
 ;; (add-to-list 'default-frame-alist
