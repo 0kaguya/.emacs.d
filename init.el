@@ -108,6 +108,18 @@
   (pyim-basedict-enable))
 
 
+
+(use-package magit
+  :ensure t)
+
+(use-package eglot
+  :ensure t)
+
+;;
+;; Additional Packages
+;;
+
+
 ;; smartparens for lisp files.
 (use-package smartparens
   :ensure t
@@ -117,10 +129,6 @@
   (add-hook 'racket-mode-hook #'smartparens-strict-mode)
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
 
-
-;;
-;; Additional Packages
-;;
 
 
 (use-package markdown-mode
@@ -136,7 +144,27 @@
 
 
 (use-package rust-mode
-  :ensure t)
+  :ensure t
+  :after (eglot)
+  ;; credit to https://gist.github.com/casouri/0ad2c6e58965f6fd2498a91fc9c66501
+  :init
+  (defun setup-rust ()
+    (setq-local eglot-workspace-configuration
+		'(:rust-analyzer
+		  (:procMacro
+		   (:atteributes (:enable t) :enable t)
+		   :cargo
+		   (:buildScripts (:enable t))
+		   :diagnosticss
+		   (:disabled ["unresolved-proc-macro"
+			       "unresolved-macro-call"])))))
+  (defclass eglot-rust-analyzer (eglot-lsp-server) ())
+  (cl-defmethod eglot-initialization-options ((server eglot-rust-analyzer))
+    eglot-workspace-configuration)
+  (add-to-list 'eglot-server-programs
+	       '(rust-mode . (eglot-rust-analyzer "rust-analyzer")))
+  :hook ((rust-mode . setup-rust)
+	 (rust-mode . eglot-ensure)))
 
 
 (use-package haskell-mode
@@ -147,10 +175,6 @@
   :ensure t
   :config
   (add-hook 'haskell-mode-hook #'hindent-mode))
-
-
-(use-package magit
-  :ensure t)
 
 
 ;; typescript support
