@@ -1,13 +1,14 @@
-;; -*- mode: elisp -*-
-;;
+;; -*- mode: emacs-lisp -*-
 ;; Emacs Config
-;;
+
 
 ;; To have a clean appearance.
 (blink-cursor-mode -1)
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
+
+;; I'm thinking about adding transparency, but that depends a lot on display system.
 
 ;; Also display column number.
 (column-number-mode t)
@@ -129,6 +130,15 @@
   (add-hook 'racket-mode-hook #'smartparens-strict-mode)
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
 
+
+(use-package julia-mode
+  :ensure t
+  :config
+  (use-package julia-repl
+    :ensure t
+    :hook ((julia-mode . julia-repl-mode)))
+  (use-package ein
+    :ensure t))
 
 
 (use-package markdown-mode
