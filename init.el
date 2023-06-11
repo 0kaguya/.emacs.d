@@ -95,6 +95,10 @@
 ;; Load Packages
 ;;
 
+;; interop with system package manager
+(use-package use-package-ensure-system-package
+  :ensure t)
+
 ;; chinese input method
 (use-package pyim
   :ensure t
@@ -109,36 +113,64 @@
   (pyim-basedict-enable))
 
 
-
+;; git frontend
 (use-package magit
+  :ensure-system-package git
   :ensure t)
 
+;; lsp support
 (use-package eglot
   :ensure t)
-
-;;
-;; Additional Packages
-;;
-
 
 ;; smartparens for lisp files.
 (use-package smartparens
   :ensure t
   :init
   (require 'smartparens-config)
-  :config
-  (add-hook 'racket-mode-hook #'smartparens-strict-mode)
-  (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
+  :hook ((emacs-lisp-mode . smartparens-strict-mode)))
 
 
-(use-package julia-mode
-  :ensure t
-  :config
-  (use-package julia-repl
-    :ensure t
-    :hook ((julia-mode . julia-repl-mode)))
-  (use-package ein
-    :ensure t))
+;;
+;; Additional Packages
+;;
+
+
+
+(when (executable-find "julia")
+  (use-package julia-mode
+   :ensure t
+   :config
+   (use-package julia-repl
+     :ensure t
+     :hook ((julia-mode . julia-repl-mode)))
+   (use-package ein
+     :ensure t)))
+
+(when (executable-find "rustup")
+  (use-package rust-mode
+   :ensure t
+   :after (eglot)
+   :ensure-system-package ((cargo . "rustup default stable")
+			   (rust-analyzer . "rustup component add rust-analyzer"))
+   ;; credit to https://gist.github.com/casouri/0ad2c6e58965f6fd2498a91fc9c66501
+   :init
+   (defun setup-rust ()
+     (setq-local eglot-workspace-configuration
+		 '(:rust-analyzer
+		   (:procMacro
+		    (:atteributes (:enable t) :enable t)
+		    :cargo
+		    (:buildScripts (:enable t))
+		    :diagnosticss
+		    (:disabled ["unresolved-proc-macro"
+				"unresolved-macro-call"])))))
+   (defclass eglot-rust-analyzer (eglot-lsp-server) ())
+   (cl-defmethod eglot-initialization-options ((server eglot-rust-analyzer))
+     eglot-workspace-configuration)
+   (add-to-list 'eglot-server-programs
+		'(rust-mode . (eglot-rust-analyzer "rust-analyzer")))
+   :hook ((rust-mode . setup-rust)
+	  (rust-mode . eglot-ensure))))
 
 
 (use-package markdown-mode
@@ -147,60 +179,35 @@
   :init (setq markdown-command "multimarkdown"))
 
 
-(use-package racket-mode
-	    :ensure t
-	    :config
-	    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable))
+(when (executable-find "racket")
+  (use-package racket-mode
+   :ensure t
+   :hook ((racket-mode . racket-unicode-input-method-enable)
+	  (racket-mode . racket-xp-mode)
+	  (racket-mode . smartparens-strict-mode))))
 
 
-(use-package rust-mode
-  :ensure t
-  :after (eglot)
-  ;; credit to https://gist.github.com/casouri/0ad2c6e58965f6fd2498a91fc9c66501
-  :init
-  (defun setup-rust ()
-    (setq-local eglot-workspace-configuration
-		'(:rust-analyzer
-		  (:procMacro
-		   (:atteributes (:enable t) :enable t)
-		   :cargo
-		   (:buildScripts (:enable t))
-		   :diagnosticss
-		   (:disabled ["unresolved-proc-macro"
-			       "unresolved-macro-call"])))))
-  (defclass eglot-rust-analyzer (eglot-lsp-server) ())
-  (cl-defmethod eglot-initialization-options ((server eglot-rust-analyzer))
-    eglot-workspace-configuration)
-  (add-to-list 'eglot-server-programs
-	       '(rust-mode . (eglot-rust-analyzer "rust-analyzer")))
-  :hook ((rust-mode . setup-rust)
-	 (rust-mode . eglot-ensure)))
+(when (executable-find "ghc")
+  (use-package haskell-mode
+   :ensure t
+   :init
+   (when (executable-find "hindent")
+     (use-package hindent
+      :ensure t
+      :hook (haskell-mode . hindent-mode)))))
 
 
-(use-package haskell-mode
-  :ensure t)
-
-
-(use-package hindent
-  :ensure t
-  :config
-  (add-hook 'haskell-mode-hook #'hindent-mode))
-
-
-;; typescript support
-(use-package tide
-  :ensure t
-  :config
+(when (executable-find "tsc")
   (use-package typescript-mode
     :ensure t)
-  (defun setup-tide-mode ()
-    (interactive)
-    (tide-setup)
-    (flycheck-mode +1)
-    (setq flycheck-check-syntax-automatically '(save mode-enabled))
-    (eldoc-mode +1)
-    (tide-hl-identifier-mode +1))
-  (add-hook 'typescript-mode-hook #'setup-tide-mode))
-
-
-
+  (use-package tide
+    :ensure t
+    :init
+    (defun setup-tide-mode ()
+      (interactive)
+      (tide-setup)
+      (flycheck-mode +1)
+      (setq flycheck-check-syntax-automatically '(save mode-enabled))
+      (eldoc-mode +1)
+      (tide-hl-identifier-mode +1))
+    :hook (typescript-mode . setup-tide-mode)))
