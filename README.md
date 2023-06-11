@@ -4,4 +4,5 @@ emacs as common editor
 
 ## Font
 
-check [monaco](https://github.com/todylu/monaco.ttf).
+[Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) is used.
+
