@@ -211,3 +211,15 @@
       (eldoc-mode +1)
       (tide-hl-identifier-mode +1))
     :hook (typescript-mode . setup-tide-mode)))
+
+(when (executable-find "erl")
+  (use-package erlang
+    :ensure t
+    :init
+    (require 'erlang-start)
+    )
+  (use-package edts
+    :ensure t
+    :init
+    (require 'edts-start))
+  )
