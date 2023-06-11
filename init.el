@@ -134,6 +134,10 @@
 ;; Additional Packages
 ;;
 
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown"))
 
 
 (when (executable-find "julia")
@@ -173,10 +177,6 @@
 	  (rust-mode . eglot-ensure))))
 
 
-(use-package markdown-mode
-  :ensure t
-  :mode ("README\\.md\\'" . gfm-mode)
-  :init (setq markdown-command "multimarkdown"))
 
 
 (when (executable-find "racket")
@@ -212,6 +212,7 @@
       (tide-hl-identifier-mode +1))
     :hook (typescript-mode . setup-tide-mode)))
 
+
 (when (executable-find "erl")
   (use-package erlang
     :ensure t
@@ -223,3 +224,5 @@
     :init
     (require 'edts-start))
   )
+
+
