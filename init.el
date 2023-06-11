@@ -41,8 +41,10 @@
 
  ;; Configure auto saving directory
  backup-directory-alist `(("." . "~/.emacs.d/.cache"))
- 
- ) ; end `setq`
+
+ ;; don't want a pop-up window.
+ use-dialog-box nil
+ )
 
 ;; Open URLs in browser
 (when (executable-find "wslview")
@@ -216,13 +218,27 @@
 (when (executable-find "erl")
   (use-package erlang
     :ensure t
+    :after (flycheck)
     :init
+    ;; credit to https://www.lambdacat.com/post-modern-emacs-setup-for-erlang/
+    (flycheck-define-checker erlang-otp
+      "custom erlang checker"
+      :command ("erlc" "-o" temporary-directory "-Wall"
+		"-I" "../include" "-I" "../../include"
+		"-I" "../../../include" source)
+      :error-patterns
+      ((warning line-start (file-name) ":" line ": Warning:" (message) line-end)
+       (error line-start (file-name) ":" line ": " (message) line-end))
+      :modes erlang-mode)
+    :hook (erlang-mode . (lambda ()
+			   (flycheck-select-checker 'erlang-otp)
+			   (flycheck-mode)))
+    :config
     (require 'erlang-start)
     )
-  (use-package edts
+  (use-package company-erlang
     :ensure t
-    :init
-    (require 'edts-start))
+    :hook (erlang-mode . company-erlang-init))
   )
 
 
