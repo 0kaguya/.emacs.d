@@ -110,7 +110,7 @@
   (use-package pyim-basedict
     :ensure t)
   (setq-default pyim-punctuation-translate-p '(no))
-  (pyim-default-scheme 'quanpin)
+  (pyim-default-scheme 'quanpin) 
   (setq pyim-page-length 5)
   (pyim-basedict-enable))
 
@@ -122,6 +122,10 @@
 
 ;; lsp support
 (use-package eglot
+  :ensure t)
+
+;; use `company' for completion
+(use-package company
   :ensure t)
 
 ;; smartparens for lisp files.
@@ -179,8 +183,6 @@
 	  (rust-mode . eglot-ensure))))
 
 
-
-
 (when (executable-find "racket")
   (use-package racket-mode
    :ensure t
@@ -236,9 +238,25 @@
     :config
     (require 'erlang-start)
     )
-  (use-package company-erlang
-    :ensure t
-    :hook (erlang-mode . company-erlang-init))
+  (if (require 'distel nil 'noerror)
+      (progn
+	;; credit to https://www.lambdacat.com/post-modern-emacs-setup-for-erlang/
+	(defvar inferor-erlang-prompt-timeout t)
+	(setq inferor-erlang-machine-options '("-sname" "emacs"))
+	(when (executable-find "hostname")
+	  (setq erl-nodename-cache
+		(concat "emacs@"
+			(car (split-string (shell-command-to-string "hostname"))))))
+	(distel-setup)
+        (use-package company-distel
+	  :after (company)
+	  :ensure t
+	  :init (add-to-list 'company-backends 'company-distel)
+	  :hook (erlang-mode . company-mode)))
+    ;; fallback to `company-erlang'
+    (use-package company-erlang
+	:ensure t
+	:hook (erlang-mode . company-erlang-init)))
   )
 
 
