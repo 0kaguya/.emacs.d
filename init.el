@@ -7,10 +7,14 @@
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
-(setq inhibit-startup-screen t)
+(setq inhibit-startup-screen t
+      inhibit-startup-echo-area-message t)
 
 ;; Also display column number.
 (column-number-mode t)
+
+;; show startup time
+(add-hook 'emacs-startup-hook (lambda () (message (emacs-init-time))))
 
 ;; Turn off beep
 (setq visible-bell 1)
@@ -191,6 +195,7 @@
   :ensure t
   :defer t)
 
+;; optionally byte compile it.
 (load (concat user-emacs-directory "conditional"))
 
 
