@@ -13,3 +13,5 @@ transient/
 eln-cache
 # IM cache
 pyim/
+
+racket-mode/

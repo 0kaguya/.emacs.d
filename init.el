@@ -1,4 +1,4 @@
-;; -*- mode: emacs-lisp -*-
+;; -*- lexical-binding: t -*-
 ;; Emacs Config
 
 
@@ -7,53 +7,87 @@
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
-
-;; I'm thinking about adding transparency, but that depends a lot on display system.
+(setq inhibit-startup-screen t)
 
 ;; Also display column number.
 (column-number-mode t)
 
-;; Set window size
-(when window-system
-  (set-frame-size (selected-frame) 100 30))
+;; Turn off beep
+(setq visible-bell 1)
 
-;; Set font
-(set-face-attribute 'default nil
-		    ;; Sarasa font is narrow, for matching 2 char = 1 CN char.
-		    :family "Sarasa Term SC"
-		    :foundry "outline"
-		    :slant 'normal
-		    :weight 'normal
-		    :height 160
-		    :width 'normal)
-;; the former approach is slower.
-;; (add-to-list 'default-frame-alist
-;;              '(font . "-*-Monaco-*-*-*-mono-21-*-*-*-c-*-iso8859-1"))
+(when (display-graphic-p)
+
+  ;; (set-frame-position (selected-frame) 100 100)
+  ;; (add-to-list 'default-frame-alist '(top  . 0.2))
+  ;; (add-to-list 'default-frame-alist '(left . 0.2))
+  (set-frame-size (selected-frame) 100 30)
+  
+  ;; ;; Add transparency and switch to a dark theme
+  ;; ;; - need Emacs 29 or above
+  ;; ;; - need `emacs-pgtk' on Wayland
+  (when (>= emacs-major-version 29)
+    (set-frame-parameter nil 'alpha-background 70)
+    ;; how to set a dark theme: just revert color.
+    (add-to-list 'default-frame-alist '(background-color . "#000000"))
+    (add-to-list 'default-frame-alist '(foreground-color . "#ffffff"))
+    ;; ... also mode line's color.
+    (set-face-attribute 'mode-line nil :background "#000000"
+			               :foreground "#ffffff")
+    ;; setup a dimmed visible bell
+    (defvar ring-bell-lock nil)
+    (setq visible-bell nil
+	  ring-bell-function (lambda ()
+                               (unless ring-bell-lock 
+				 (setq ring-bell-lock t)
+				 (let ((current (face-attribute 'mode-line :background))
+				       (flash "#aaaaaa"))
+				   (set-face-attribute 'mode-line nil :background flash)
+				   (run-with-idle-timer 0.1
+							nil
+							(lambda ()
+							  (set-face-attribute 'mode-line nil
+									      :background current)
+							  (setq ring-bell-lock nil)
+							  ))))))
+
+    ;; unsure what system theme looks like; just turn that off.
+    (set-frame-parameter nil 'undecorated t)
+    
+  )
+  
+  ;; Set font
+  (set-face-attribute 'default nil
+		      ;; Sarasa font is narrow, for matching 2 char = 1 CN char.
+		      :family "Sarasa Term SC"
+		      :foundry "outline"
+		      :slant 'normal
+		      :weight 'normal
+		      :height 160
+		      :width 'normal)
+  
+  ;; (add-to-list 'default-frame-alist
+  ;;              '(font . "-*-Monaco-*-*-*-mono-21-*-*-*-c-*-iso8859-1"))
+  
+  )
+
 
 ;; Toggle some options.
 (setq
  make-backup-files nil
- inhibit-startup-screen t
- visible-bell 1
+ ;; Configure auto saving directory
+ backup-directory-alist `(("." . ,(concat user-emacs-directory ".cache")))
 
  ;; quoted insert use hex number
  read-quoted-char-radix 16
-
- ;; Configure auto saving directory
- backup-directory-alist `(("." . "~/.emacs.d/.cache"))
 
  ;; don't want a pop-up window.
  use-dialog-box nil
  )
 
-;; Open URLs in browser
-(when (executable-find "wslview")
-  (setq browse-url-browser-function 'browse-url-generic
-	browse-url-generic-program "wslview"))
 
 ;; Automatic generated config are set and loaded here.
-(setq custom-file "~/.emacs.d/custom.el")
-(load custom-file t)
+(setq custom-file (concat user-emacs-directory "custom.el"))
+(load custom-file 'noerror)
 
 ;; Emulate the title bar's right-click menu
 ;;(define-prefix-command 'keymap-titlebar-menu)
@@ -66,16 +100,23 @@
 ;;
 
 ;; load package manager
-(when (version< emacs-version "27")
+(when (< emacs-major-version 27)
   (require 'package))
 
 ;; Set elpa mirror:
 ;; https://mirrors.tuna.tsinghua.edu.cn
 (setq package-archives
-      ;; https ones will prompt insecure hint.
-      '(("gnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-	("melpa" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-	("nongnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")))
+      ;; https:// will have prompt with insecure warning
+      '(("gnu"          . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+	("nongnu"       . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
+	("melpa-stable" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/stable-melpa")
+	("melpa"        . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+        ("org"          . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/")
+	))
+
+;; initialize package manager
+(when (< emacs-major-version 27)
+  (package-initialize))
 
 ;; Fetch package list if there's not one.
 (unless (file-exists-p package-user-dir)
@@ -85,13 +126,16 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-(eval-when-compile
-  (require 'use-package))
+;; verbose mode show package load time
+(setq use-package-verbose t)
+
+;; do not byte compile init file.
+;;(eval-when-compile
+;;  (require 'use-package))
+
+;; required feature from `use-package'
 (require 'bind-key)
 
-;; initialize package manager
-(when (version< emacs-version "27")
-  (package-initialize))
 
 ;;
 ;; Load Packages
@@ -99,30 +143,40 @@
 
 ;; interop with system package manager
 (use-package use-package-ensure-system-package
-  :ensure t)
+  :functions use-package-ensure-package-exist?
+  :ensure t
+  :defer t)
+
+(use-package esup
+  :ensure t
+  :defer t)
 
 ;; chinese input method
-(use-package pyim
-  :ensure t
-  :init
-  (setq default-input-method "pyim")
-  :config
-  (use-package pyim-basedict
-    :ensure t)
-  (setq-default pyim-punctuation-translate-p '(no))
-  (pyim-default-scheme 'quanpin) 
-  (setq pyim-page-length 5)
-  (pyim-basedict-enable))
+(when (display-graphic-p)
+  (use-package pyim
+    :ensure t
+    :defer t
+    :init
+    (setq default-input-method "pyim")
+    :config
+    (use-package pyim-basedict
+      :ensure t)
+    (setq-default pyim-punctuation-translate-p '(yes))
+    (pyim-default-scheme 'quanpin)
+    (setq pyim-page-length 5)
+    (pyim-basedict-enable)))
 
 
 ;; git frontend
 (use-package magit
   :ensure-system-package git
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; lsp support
 (use-package eglot
-  :ensure t)
+  :ensure t
+  :defer t)
 
 ;; use `company' for completion
 (use-package company
@@ -135,128 +189,16 @@
   (require 'smartparens-config)
   :hook ((emacs-lisp-mode . smartparens-strict-mode)))
 
-
-;;
-;; Additional Packages
-;;
-
 (use-package markdown-mode
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown"))
 
+(use-package org
+  :ensure t
+  :defer t)
 
-(when (executable-find "julia")
-  (use-package julia-mode
-   :ensure t
-   :config
-   (use-package julia-repl
-     :ensure t
-     :hook ((julia-mode . julia-repl-mode)))
-   (use-package ein
-     :ensure t)))
+(load (concat user-emacs-directory "conditional"))
 
-(when (executable-find "rustup")
-  (use-package rust-mode
-   :ensure t
-   :after (eglot)
-   :ensure-system-package ((cargo . "rustup default stable")
-			   (rust-analyzer . "rustup component add rust-analyzer"))
-   ;; credit to https://gist.github.com/casouri/0ad2c6e58965f6fd2498a91fc9c66501
-   :init
-   (defun setup-rust ()
-     (setq-local eglot-workspace-configuration
-		 '(:rust-analyzer
-		   (:procMacro
-		    (:atteributes (:enable t) :enable t)
-		    :cargo
-		    (:buildScripts (:enable t))
-		    :diagnosticss
-		    (:disabled ["unresolved-proc-macro"
-				"unresolved-macro-call"])))))
-   (defclass eglot-rust-analyzer (eglot-lsp-server) ())
-   (cl-defmethod eglot-initialization-options ((server eglot-rust-analyzer))
-     eglot-workspace-configuration)
-   (add-to-list 'eglot-server-programs
-		'(rust-mode . (eglot-rust-analyzer "rust-analyzer")))
-   :hook ((rust-mode . setup-rust)
-	  (rust-mode . eglot-ensure))))
-
-
-(when (executable-find "racket")
-  (use-package racket-mode
-   :ensure t
-   :hook ((racket-mode . racket-unicode-input-method-enable)
-	  (racket-mode . racket-xp-mode)
-	  (racket-mode . smartparens-strict-mode))))
-
-
-(when (executable-find "ghc")
-  (use-package haskell-mode
-   :ensure t
-   :init
-   (when (executable-find "hindent")
-     (use-package hindent
-      :ensure t
-      :hook (haskell-mode . hindent-mode)))))
-
-
-(when (executable-find "tsc")
-  (use-package typescript-mode
-    :ensure t)
-  (use-package tide
-    :ensure t
-    :init
-    (defun setup-tide-mode ()
-      (interactive)
-      (tide-setup)
-      (flycheck-mode +1)
-      (setq flycheck-check-syntax-automatically '(save mode-enabled))
-      (eldoc-mode +1)
-      (tide-hl-identifier-mode +1))
-    :hook (typescript-mode . setup-tide-mode)))
-
-
-(when (executable-find "erl")
-  (use-package erlang
-    :ensure t
-    :after (flycheck)
-    :init
-    ;; credit to https://www.lambdacat.com/post-modern-emacs-setup-for-erlang/
-    (flycheck-define-checker erlang-otp
-      "custom erlang checker"
-      :command ("erlc" "-o" temporary-directory "-Wall"
-		"-I" "../include" "-I" "../../include"
-		"-I" "../../../include" source)
-      :error-patterns
-      ((warning line-start (file-name) ":" line ": Warning:" (message) line-end)
-       (error line-start (file-name) ":" line ": " (message) line-end))
-      :modes erlang-mode)
-    :hook (erlang-mode . (lambda ()
-			   (flycheck-select-checker 'erlang-otp)
-			   (flycheck-mode)))
-    :config
-    (require 'erlang-start)
-    )
-  (if (require 'distel nil 'noerror)
-      (progn
-	;; credit to https://www.lambdacat.com/post-modern-emacs-setup-for-erlang/
-	(defvar inferor-erlang-prompt-timeout t)
-	(setq inferor-erlang-machine-options '("-sname" "emacs"))
-	(when (executable-find "hostname")
-	  (setq erl-nodename-cache
-		(concat "emacs@"
-			(car (split-string (shell-command-to-string "hostname"))))))
-	(distel-setup)
-        (use-package company-distel
-	  :after (company)
-	  :ensure t
-	  :init (add-to-list 'company-backends 'company-distel)
-	  :hook (erlang-mode . company-mode)))
-    ;; fallback to `company-erlang'
-    (use-package company-erlang
-	:ensure t
-	:hook (erlang-mode . company-erlang-init)))
-  )
 
 
