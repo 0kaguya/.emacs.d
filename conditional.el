@@ -5,6 +5,12 @@
   (require 'use-package)
   (require 'flycheck))
 
+;; git frontend
+(use-package magit
+  :ensure-system-package git
+  :ensure t
+  :defer t)
+
 
 (when (executable-find "julia")
   (use-package julia-mode

@@ -18,8 +18,6 @@
 (when (display-graphic-p)
 
   ;; (set-frame-position (selected-frame) 100 100)
-  ;; (add-to-list 'default-frame-alist '(top  . 0.2))
-  ;; (add-to-list 'default-frame-alist '(left . 0.2))
   (set-frame-size (selected-frame) 100 30)
   
   ;; ;; Add transparency and switch to a dark theme
@@ -27,12 +25,12 @@
   ;; ;; - need `emacs-pgtk' on Wayland
   (when (>= emacs-major-version 29)
     (set-frame-parameter nil 'alpha-background 70)
-    ;; how to set a dark theme: just revert color.
-    (add-to-list 'default-frame-alist '(background-color . "#000000"))
-    (add-to-list 'default-frame-alist '(foreground-color . "#ffffff"))
-    ;; ... also mode line's color.
-    (set-face-attribute 'mode-line nil :background "#000000"
-			               :foreground "#ffffff")
+    ;; how to set a dark theme: just reverted color.
+    (set-face-background 'default "#000000")
+    (set-face-background 'mode-line "#000000")
+    (set-face-foreground 'default "#ffffff")
+    (set-face-foreground 'mode-line "#ffffff")
+    
     ;; setup a dimmed visible bell
     (defvar ring-bell-lock nil)
     (setq visible-bell nil
@@ -126,8 +124,9 @@
 (unless (package-installed-p 'use-package)
   (package-install 'use-package))
 
-;; verbose mode show package load time
-(setq use-package-verbose t)
+;; package load time
+(setq use-package-verbose t
+      use-package-compute-statistics t)
 
 ;; do not byte compile init file.
 ;;(eval-when-compile
@@ -142,10 +141,10 @@
 ;;
 
 ;; interop with system package manager
-(use-package use-package-ensure-system-package
-  :functions use-package-ensure-package-exist?
-  :ensure t
-  :defer t)
+;; (use-package use-package-ensure-system-package
+;;   :functions use-package-ensure-package-exist?
+;;   :ensure t
+;;   :defer t)
 
 (use-package esup
   :ensure t
@@ -166,12 +165,6 @@
     (setq pyim-page-length 5)
     (pyim-basedict-enable)))
 
-
-;; git frontend
-(use-package magit
-  :ensure-system-package git
-  :ensure t
-  :defer t)
 
 ;; lsp support
 (use-package eglot
