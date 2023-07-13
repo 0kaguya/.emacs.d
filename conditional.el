@@ -155,6 +155,14 @@
       (tide-hl-identifier-mode +1))
     :hook (typescript-mode . setup-tide-mode)))
 
+(when (executable-find "npm")
+  (use-package js2-mode
+    :ensure t
+    :defer t
+    :mode ("\\.js\\'" . js-mode)
+    :hook (js-mode . js2-minor-mode))
+  )
+
 
 (when (executable-find "erl")
   (use-package erlang
