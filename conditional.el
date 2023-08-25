@@ -1,13 +1,19 @@
-;; -*- mode: emacs-lisp -*-
+;; -*- lexical-binding: t -*-
+
+(defun ensure-package (&rest package-list)
+  "check if it is a installed package. if is not, install it."
+  (dolist (name package-list)
+    (unless (package-installed-p name)
+      (package-install name))))
+
 ;; Additional Packages
 
 ;; Fetch package list if there's not one.
 (unless (file-exists-p package-user-dir)
   (package-refresh-contents))
 
-;; 'use-package itself need to be installed.
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+;; `use-package' itself need to be installed.
+(ensure-package 'use-package)
 
 (eval-when-compile
   (require 'package)
@@ -50,10 +56,13 @@
     (pyim-basedict-enable)))
 
 
-;; lsp support
-(use-package eglot
-  :ensure t
-  :defer t)
+
+
+(if (string-search "TREE_SITTER" system-configuration-features)
+    (require 'treesit)
+  (use-package tree-sitter
+    :ensure t)
+  )
 
 ;; use `company' for completion
 (use-package company
@@ -65,6 +74,13 @@
   :init
   (require 'smartparens-config)
   :hook ((emacs-lisp-mode . smartparens-strict-mode)))
+
+(use-package macrostep
+  :ensure t
+  :commands macrostep-expand
+  :init
+  (define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
+  )
 
 (use-package markdown-mode
   :ensure t
@@ -93,32 +109,26 @@
    (use-package ein
      :ensure t)))
 
-
-(when (executable-find "rustup")
-  (use-package rust-mode
-   :ensure t
-   :after (eglot)
-   :ensure-system-package ((cargo . "rustup default stable")
-			   (rust-analyzer . "rustup component add rust-analyzer"))
-   ;; credit to https://gist.github.com/casouri/0ad2c6e58965f6fd2498a91fc9c66501
-   :init
-   (defun setup-rust ()
-     (setq-local eglot-workspace-configuration
-		 '(:rust-analyzer
-		   (:procMacro
-		    (:atteributes (:enable t) :enable t)
-		    :cargo
-		    (:buildScripts (:enable t))
-		    :diagnosticss
-		    (:disabled ["unresolved-proc-macro"
-				"unresolved-macro-call"])))))
-   (defclass eglot-rust-analyzer (eglot-lsp-server) ())
-   (cl-defmethod eglot-initialization-options ((server eglot-rust-analyzer))
-     eglot-workspace-configuration)
-   (add-to-list 'eglot-server-programs
-		'(rust-mode . (eglot-rust-analyzer "rust-analyzer")))
-   :hook ((rust-mode . setup-rust)
-	  (rust-mode . eglot-ensure))))
+(if (executable-find "rustup")
+    (progn
+      (ensure-package 'eglot
+		      'flycheck)
+      (unless (package-installed-p 'rust-mode)
+	(package-install 'rust-mode)
+	;; check and install components (i.e. rust-analyzer)
+	(let ((buffer (generate-new-buffer "Rustup Output")))
+	  (shell-command "rustup component list" buffer)
+	  (when (with-current-buffer buffer
+		  (goto-char (point-min))
+		  (re-search-forward "^rust-analyzer-[^ ]* (installed)" nil t))
+	    (shell-command "rustup component add rust-analyzer" buffer))
+	  (kill-buffer buffer)))
+      
+      (add-hook 'rust-mode-hook 'flycheck-mode)
+      (add-hook 'rust-mode-hook 'eglot-ensure))
+  (when (package-installed-p 'rust-mode)
+    (package-delete 'rust-mode))
+  )
 
 
 (when (executable-find "racket")
@@ -138,12 +148,16 @@
       :ensure t
       :hook (haskell-mode . hindent-mode)))))
 
+(when (executable-find "npm")
+  (use-package js2-mode
+    :ensure t
+    :mode ("\\.jsx?\\'" . js-mode)
+    :hook (js-mode . js2-minor-mode)))
 
-(when (executable-find "tsc")
-  (use-package typescript-mode
-    :ensure t)
+(when (executable-find "tsserver")
   (use-package tide
     :ensure t
+    :after (flycheck company)
     :functions (tide-hl-identifier-mode tide-setup)
     :init
     (defun setup-tide-mode ()
@@ -152,16 +166,48 @@
       (flycheck-mode +1)
       (setq flycheck-check-syntax-automatically '(save mode-enabled))
       (eldoc-mode +1)
-      (tide-hl-identifier-mode +1))
-    :hook (typescript-mode . setup-tide-mode)))
-
-(when (executable-find "npm")
-  (use-package js2-mode
-    :ensure t
-    :defer t
-    :mode ("\\.js\\'" . js-mode)
-    :hook (js-mode . js2-minor-mode))
+      (tide-hl-identifier-mode +1)
+      (company-mode +1))
+    
+    :config
+    (setq company-tooltip-align-annotations t)
+    (setq tide-format-options
+	  '(:insertSpaceAfterFunctionKeywordForAnoymousFunctions t
+	    :placeOpenBraceOnNewLineForFunctions nil)
+	  )
+    
+    )
+  
+  (if (treesit-ready-p 'typescript)
+      (progn
+	(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+	(add-hook 'typescript-ts-mode-hook #'setup-tide-mode))
+    (use-package typescript-mode
+      :ensure t
+      :mode "\\.ts\\'"
+      :hook (typescript-mode . setup-tide-mode)
+      )
+    )
+  (if (treesit-ready-p 'tsx)
+      (progn
+	(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+	(add-hook 'tsx-ts-mode-hook #'setup-tide-mode))
+    (use-package web-mode
+      :ensure t
+      :after (flycheck)
+      :mode "\\.tsx\\'"
+      :hook (web-mode . (lambda ()
+			  (let ((extension (file-name-extension buffer-file-name)))
+			    (when (string-equal "tsx" extension)
+			      (setup-tide-mode)))
+			  )
+		      )
+      :config
+      (flycheck-add-mode 'typescript-tslint 'web-mode)
+      )
+    )
   )
+
 
 
 (when (executable-find "erl")

@@ -52,7 +52,7 @@
 							  (setq ring-bell-lock nil)
 							  ))))))
 
-    ;; unsure what system theme looks like; just turn that off.
+    ;; unsure what system theme looks like.
     (set-frame-parameter nil 'undecorated t)
     
   )
@@ -72,7 +72,6 @@
   
   )
 
-
 ;; Toggle some options.
 (setq
  make-backup-files nil
@@ -85,11 +84,6 @@
  ;; don't want a pop-up window.
  use-dialog-box nil
  )
-
-
-;; Automatic generated config are set and loaded here.
-(setq custom-file (concat user-emacs-directory "custom.el"))
-(load custom-file 'noerror)
 
 ;; Emulate the title bar's right-click menu
 ;;(define-prefix-command 'keymap-titlebar-menu)
@@ -111,18 +105,21 @@
       ;; https:// will have prompt with insecure warning
       '(("gnu"          . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
 	("nongnu"       . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-	("melpa-stable" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/stable-melpa")
+	("melpa-stable" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/stable-melpa/")
 	("melpa"        . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
         ("org"          . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/")
 	))
+;; set no proxy for elpa mirror.
+;(add-to-list 'url-proxy-services '("no_proxy" . "[^.]*\\.tuna\\.tsinghua\\.edu\\.cn"))
 
 ;; initialize package manager
 (when (< emacs-major-version 27)
   (package-initialize))
 
 
-;; optionally byte compile it.
+;; extra packages
 (load (concat user-emacs-directory "conditional"))
 
-
-
+;; Automatic generated settings are at somewhere else.
+(setq custom-file (concat user-emacs-directory "custom.el"))
+(load custom-file 'noerror)

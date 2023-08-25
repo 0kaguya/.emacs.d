@@ -15,3 +15,5 @@ eln-cache
 pyim/
 
 racket-mode/
+# LSP
+projects
