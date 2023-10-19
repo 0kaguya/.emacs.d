@@ -17,3 +17,5 @@ pyim/
 racket-mode/
 # LSP
 projects
+tree-sitter/
+games/
