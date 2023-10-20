@@ -55,7 +55,10 @@
 			   ('otherwise high))))
 	(set-frame-parameter nil alpha next))))
   ;; binds it to F12
-  (global-set-key (kbd "<f12>") #'toggle-transparency))
+  (cond ((>= emacs-major-version 29)
+	 (keymap-global-set "<f12>" #'toggle-transparency))
+	((global-set-key (kbd "<f12>") #'toggle-transparency)))
+  )
 
 (when (display-graphic-p)
   ;; Replace ring bell with custom bell on macOS
@@ -85,10 +88,13 @@
 			     :family "Monaco" :foundry "outline"
 			     :slant 'normal :weight 'normal
 			     :height 160 :width 'normal))
+	((eq system-type 'windows-nt)
+	 (set-face-attribute 'default nil
+			     :family "Sarasa Mono SC" :foundry "outline"
+			     :slant 'normal :weight 'normal
+			     :height 110 :width 'normal))
 	('otherwise
 	 (set-face-attribute 'default nil
-			     ;; Sarasa font is narrow, for matching
-			     ;; 2 char = 1 CN char.
 			     :family "Sarasa Term SC" :foundry "outline"
 			     :slant 'normal :weight 'normal
 			     :height 160 :width 'normal))))

@@ -35,6 +35,13 @@
        ))
     ))
 
+(with-eval-after-load 'eglot
+  (cond ((>= emacs-major-version 29)
+	 (keymap-set eglot-mode-map "S-<f6>" #'eglot-rename))
+	('else
+	 (define-key eglot-mode-map (kbd "S-<f6>") #'eglot-rename)))
+  )
+
 (let
     ;; Typescript and TSX
     ((setup-typescript
@@ -112,4 +119,6 @@
   (when (package-installed-p 'js2-mode)
     (add-to-list 'auto-mode-alist
 		 '("\\.jsx?\\'" . js-mode))
-    (add-hook 'js-mode-hook #'js2-minor-mode)))
+    (add-hook 'js-mode-hook #'js2-minor-mode))
+  (with-eval-after-load 'js
+    (setq js-indent-level 2)))
