@@ -36,6 +36,9 @@
 	    (lambda () (message (emacs-init-time))))
   )
 
+;; Define functions that might not be defined in earlier Emacs versions.
+(load (concat user-emacs-directory "compatibility"))
+
 (when (display-graphic-p)
   ;; Defines and binds `toggle-transparency' feature  
   (let ((alpha
@@ -55,10 +58,7 @@
 			   ('otherwise high))))
 	(set-frame-parameter nil alpha next))))
   ;; binds it to F12
-  (cond ((>= emacs-major-version 29)
-	 (keymap-global-set "<f12>" #'toggle-transparency))
-	((global-set-key (kbd "<f12>") #'toggle-transparency)))
-  )
+  (keymap-global-set "<f12>" #'toggle-transparency))
 
 (when (display-graphic-p)
   ;; Replace ring bell with custom bell on macOS
@@ -87,7 +87,7 @@
 	 (set-face-attribute 'default nil
 			     :family "Monaco" :foundry "outline"
 			     :slant 'normal :weight 'normal
-			     :height 160 :width 'normal))
+			     :height 150 :width 'normal))
 	((eq system-type 'windows-nt)
 	 (set-face-attribute 'default nil
 			     :family "Sarasa Mono SC" :foundry "outline"

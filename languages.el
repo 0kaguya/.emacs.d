@@ -4,6 +4,9 @@
       (active-packages '())
       (update-packages-functions '()))
   (defun update-packages ()
+    "Alter packages according to executables found in PATH.
+Run `update-packages' manually when the development toolchain for
+some language is added or removed."
     (interactive)
     (run-hook-with-args
      'update-packages-functions
@@ -19,6 +22,8 @@
 	  all-packages)
     )
   (defun package-bind-executable (executables &rest packages)
+    "Assign `packages' to track some `executables' in PATH.
+These won't take effect until `update-packages' is called."
     (add-hook
      'update-packages-functions
      (lambda (all-executables)
@@ -36,11 +41,7 @@
     ))
 
 (with-eval-after-load 'eglot
-  (cond ((>= emacs-major-version 29)
-	 (keymap-set eglot-mode-map "S-<f6>" #'eglot-rename))
-	('else
-	 (define-key eglot-mode-map (kbd "S-<f6>") #'eglot-rename)))
-  )
+  (keymap-set eglot-mode-map "S-<f6>" #'eglot-rename))
 
 (let
     ;; Typescript and TSX
