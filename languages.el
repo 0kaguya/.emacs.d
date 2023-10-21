@@ -23,7 +23,7 @@ some language is added or removed."
     )
   (defun package-bind-executable (executables &rest packages)
     "Assign `packages' to track some `executables' in PATH.
-These won't take effect until `update-packages' is called."
+This won't have effect until `update-packages' is called."
     (add-hook
      'update-packages-functions
      (lambda (all-executables)
@@ -72,6 +72,7 @@ These won't take effect until `update-packages' is called."
 	     #'tide-setup
 	     #'flymake-mode
 	     #'eldoc-mode
+	     #'electric-pair-local-mode
 	     )))
 
 (progn
@@ -87,12 +88,18 @@ These won't take effect until `update-packages' is called."
   (when (package-installed-p 'racket-mode)
     (add-hook 'racket-mode-hook #'racket-xp-mode)
     (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable)
-    (when (package-installed-p 'smartparens)
-      (add-hook 'racket-mode-hook #'smartparens-strict-mode))
+    (cond ((package-installed-p 'smartparens)
+	   (add-hook 'racket-mode-hook #'smartparens-strict-mode))
+	  ('otherwise
+	   (add-hook 'racket-mode-hook #'electric-pair-local-mode)))    
     ))
 
 (progn
   ;; Rust
+  ;; On some distributions, an empty `rust-analyzer' will be installed
+  ;; when rust toolchain / rustup is managed by system package manager.
+  ;; This will cause a language server error. So make sure `rust-analyzer'
+  ;; shawn `installed' in the rustup component list.
   (package-bind-executable '("cargo" "rust-analyzer") 'rust-mode)
   (when (package-installed-p 'rust-mode)
     (add-hook 'rust-mode-hook #'flymake-mode)

@@ -1,4 +1,5 @@
 ;; -*- lexical-binding: t -*-
+;; This is some legacy config.
 
 (defun ensure-package (&rest package-list)
   "check if it is a installed package. if is not, install it."

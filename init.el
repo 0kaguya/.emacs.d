@@ -36,6 +36,14 @@
 	    (lambda () (message (emacs-init-time))))
   )
 
+;; Toggle some options.
+(setq
+ ;; quoted insert use hex number
+ read-quoted-char-radix 16
+ ;; don't want a pop-up window.
+ use-dialog-box nil
+ )
+
 ;; Define functions that might not be defined in earlier Emacs versions.
 (load (concat user-emacs-directory "compatibility"))
 
@@ -102,16 +110,9 @@
 (when (display-graphic-p)
   "Set frame size"
   ;; (set-frame-position (selected-frame) 100 100)
-  ;; (set-frame-size (selected-frame) 100 30)  
+  ;; (set-frame-size (selected-frame) 100 30)
   )
 
-;; Toggle some options.
-(setq
- ;; quoted insert use hex number
- read-quoted-char-radix 16
- ;; don't want a pop-up window.
- use-dialog-box nil
- )
 
 ;; Emulate the title bar's right-click menu
 ;; (define-prefix-command 'keymap-titlebar-menu)
@@ -140,8 +141,6 @@
 	 ("melpa"  . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
 	 ("org"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/"))))
      )
-    (unless (file-exists-p package-user-dir)
-  (package-refresh-contents))
     )
   (when (< emacs-major-version 27)
     ;; initialize package manager for version before Emacs 27.
@@ -168,9 +167,8 @@
   (exec-path-from-shell-initialize)
   )
 
-(when (and (display-graphic-p)
-	   input-method-enabled)
-  ;; Input Method.
+(when (input-method-enabled)
+  ;; Enable Input Method on demand.
   (unless (package-installed-p 'pyim)
     (package-install 'pyim))
   (unless (package-installed-p 'pyim-basedict)
@@ -181,6 +179,14 @@
     (setq pyim-page-length 5)
     (pyim-basedict-enable))
   (setq default-input-method "pyim"))
+
+(unless (display-graphic-p)
+  ;; Use vim-like keymap on text mode.
+  (unless (package-installed-p 'meow)
+    (package-install 'meow))
+  (require 'meow)
+  (meow-setup)
+  (meow-global-mode))
 
 (progn
   ;; Config for editing Emacs Lisp.
