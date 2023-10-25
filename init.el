@@ -53,7 +53,7 @@
 	 (cond ((and (>= emacs-major-version 29)
 		     (eq (framep (selected-frame)) 'pgtk))
 		'alpha-background)
-	       ('otherwise 'alpha)))
+	       ('alpha)))
 	;; change value of `low' for a comfortable opacity
 	(low 70) 
 	(high 100))
@@ -67,6 +67,23 @@
 	(set-frame-parameter nil alpha next))))
   ;; binds it to F12
   (keymap-global-set "<f12>" #'toggle-transparency))
+
+(let ((uname nil))
+  (defun wslp ()
+    "Returns non-nil when Emacs is running on WSL."
+    (and (eq system-type 'gnu/linux)
+	 (string-match
+	  "-[Mm]icrosoft"
+	  (cond ((stringp uname)
+		 uname)               
+		((setq uname (shell-command-to-string "uname -a"))))
+	  ))))
+
+(when (or (eq system-type 'windows-nt)
+	  (wslp))
+  ;; Define a second key for `just-one-space' because the default keybinding
+  ;; get interrupt with other hotkeys on Windows.
+  (keymap-global-set "M-<f1>" #'just-one-space))
 
 (when (display-graphic-p)
   ;; Replace ring bell with custom bell on macOS
@@ -145,9 +162,14 @@
   (when (< emacs-major-version 27)
     ;; initialize package manager for version before Emacs 27.
     (package-initialize))
-  (unless (file-exists-p package-user-dir)
-    ;; fetch package list if there's not one.
-    (package-refresh-contents))
+  (cond ((file-exists-p package-user-dir)
+	 ;; refresh package list when Emacs is idle.
+	 (run-with-idle-timer
+	  30
+	  nil
+	  #'package-refresh-contents))
+	;; fetch package list immediately when it's not present.
+	((package-refresh-contents)))
   )
 
 ;; set no proxy for elpa mirror.
@@ -167,7 +189,7 @@
   (exec-path-from-shell-initialize)
   )
 
-(when (input-method-enabled)
+(when input-method-enabled
   ;; Enable Input Method on demand.
   (unless (package-installed-p 'pyim)
     (package-install 'pyim))
@@ -181,12 +203,11 @@
   (setq default-input-method "pyim"))
 
 (unless (display-graphic-p)
-  ;; Use vim-like keymap on text mode.
-  (unless (package-installed-p 'meow)
-    (package-install 'meow))
-  (require 'meow)
-  (meow-setup)
-  (meow-global-mode))
+  ;; Use vim-like keymap on non-gui mode.
+  (unless (package-installed-p 'evil)
+    (package-install 'evil)
+    (require 'evil)
+    (evil-mode)))
 
 (progn
   ;; Config for editing Emacs Lisp.
@@ -208,9 +229,9 @@
 (progn
   ;; LOAD OTHER CONFIG FILES
   ;; Support for other languages
-  (load (concat user-emacs-directory "languages"))
+  (load (concat user-emacs-directory "languages") t)
   ;; Extra packages
-  (load (concat user-emacs-directory "conditional"))
+  (load (concat user-emacs-directory "conditional") t)
   ;; Auto-generated config
-  (load custom-file 'noerror)
+  (load custom-file t)
   )
