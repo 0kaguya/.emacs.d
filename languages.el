@@ -1,4 +1,5 @@
 ;; -*- lexical-binding: t -*-
+(require 'cl-macs)
 
 (let ((all-packages '())
       (active-packages '())
@@ -91,7 +92,7 @@ This won't have effect until `update-packages' is called."
     (cond ((package-installed-p 'smartparens)
 	   (add-hook 'racket-mode-hook #'smartparens-strict-mode))
 	  ('otherwise
-	   (add-hook 'racket-mode-hook #'electric-pair-local-mode)))    
+	   (add-hook 'racket-mode-hook #'electric-pair-local-mode)))
     ))
 
 (progn
@@ -130,3 +131,76 @@ This won't have effect until `update-packages' is called."
     (add-hook 'js-mode-hook #'js2-minor-mode))
   (with-eval-after-load 'js
     (setq js-indent-level 2)))
+
+(with-eval-after-load 'mixal-mode
+  ;; Knuth's MIXAL
+  (load "/usr/share/mdk/mixvm.el" t)
+  )
+
+(progn
+  (defun term-run (command)
+    "run a shell command in a new window."
+    (when (eq (next-window) (selected-window))
+      (split-window))
+    (with-selected-window (next-window)
+      (term command)))
+  (let ((compiler nil))
+    (defvar-local compiler-options ""
+      "file local compiler options")
+    (put 'compiler-options 'safe-local-variable #'stringp)
+    (defun c++-compile ()
+      (interactive)
+      (unless (consp compiler)
+	(setq compiler (seq-filter #'executable-find
+				   '("g++" "clang++" "cl"))))
+      (let ((command (cond
+		      ((not (consp compiler))
+		       "echo no compiler found")
+		      ((null (buffer-file-name))
+		       "echo file have not saved yet")
+		      ((concat
+			(car compiler) " "
+			compiler-options " "
+			(buffer-file-name))))))
+	(compile command))))
+  (defun c++-run ()
+    (interactive)
+    ;; there could be a `in.txt' file in the same directory.
+    (let ((input (concat (file-name-directory (buffer-file-name))
+			 "in.txt")))
+      ;; when `in.txt' exists, redirect input from it.
+      (term-run (concat "./a.out"
+			(when (file-exists-p input)
+			  (concat " < " input))))))
+  (let ((major-mode-hook
+	   ;; select major mode
+	   (cond ((and (treesit-available-p)
+		       (treesit-language-available-p 'c++))
+		  ;; use tree sitter mode when available
+		  (add-to-list 'major-mode-remap-alist
+			       '(c++-mode . c++-ts-mode))
+		  'c++-ts-mode-hook)
+		 ('c++-mode-hook))))
+      ;; add hook to major mode
+      (add-hook major-mode-hook #'electric-pair-local-mode)
+      (add-hook major-mode-hook (lambda ()
+				  (keymap-local-set "C-c C-c" #'c++-compile)
+				  (keymap-local-set "C-c C-r" #'c++-run))))
+  (add-hook 'text-mode-hook
+	      (lambda ()
+		(when (string= (file-name-nondirectory (buffer-file-name))
+			       "in.txt")
+		  ;; also bind keys for the `in.txt' file.
+		  (keymap-local-set "C-c C-c" #'c++-compile)
+		  (keymap-local-set "C-c C-r" #'c++-run)
+				  ))))
+
+(progn
+  ;; C
+  (add-hook 'c-mode-hook (lambda ()
+			   (electric-pair-local-mode)
+			   (keymap-local-set "C-c C-c" #'compile)))
+  (when (and (treesit-available-p)
+	     (treesit-language-available-p 'c))
+    (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
+    (add-hook 'c-ts-mode-hook (lambda () (run-hooks 'c-mode-hook)))))

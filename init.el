@@ -4,7 +4,7 @@
 (progn
   ;; Commonly used options.
   (unless (eq system-type 'darwin)
-    ;; show menu bar on macOS, hide menu bar otherwise. 
+    ;; show menu bar on macOS, hide menu bar otherwise.
     (menu-bar-mode -1))
   ;; Prohibit some widgets for a clean appearance.
   (tool-bar-mode -1)
@@ -48,14 +48,14 @@
 (load (concat user-emacs-directory "compatibility"))
 
 (when (display-graphic-p)
-  ;; Defines and binds `toggle-transparency' feature  
+  ;; Defines and binds `toggle-transparency' feature
   (let ((alpha
 	 (cond ((and (>= emacs-major-version 29)
 		     (eq (framep (selected-frame)) 'pgtk))
 		'alpha-background)
 	       ('alpha)))
 	;; change value of `low' for a comfortable opacity
-	(low 70) 
+	(low 70)
 	(high 100))
     (defun toggle-transparency ()
       (interactive)
@@ -75,7 +75,7 @@
 	 (string-match
 	  "-[Mm]icrosoft"
 	  (cond ((stringp uname)
-		 uname)               
+		 uname)
 		((setq uname (shell-command-to-string "uname -a"))))
 	  ))))
 
@@ -92,7 +92,7 @@
     (setq visible-bell nil)
     (setq ring-bell-function
 	  (lambda ()
-            (unless ring-bell-lock 
+            (unless ring-bell-lock
 	      (setq ring-bell-lock t)
 	      (let ((current (face-attribute 'mode-line :background))
 		    (flash "#000000")) ;; High contrast color
@@ -143,12 +143,11 @@
     ;; load package manager for version beforce Emacs 27.
     (require 'package))
   (with-eval-after-load 'package
+    (add-to-list
+     'package-archives '("melpa" . "https://melpa.org/packages/") t)
+    (add-to-list
+     'package-archives '("org"   . "https://orgmode.org/elpa/") t)
     (cond
-     ((null use-melpa-mirror)     
-      (add-to-list
-       'package-archives '("melpa" . "https://melpa.org/packages/") t)
-      (add-to-list
-       'package-archives '("org"   . "https://orgmode.org/elpa/") t))
      ((eq use-melpa-mirror 'tuna)
       ;; https://mirrors.tuna.tsinghua.edu.cn
       (setq
