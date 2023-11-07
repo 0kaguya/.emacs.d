@@ -1,8 +1,7 @@
-;; -*- lexical-binding: t -*-
-;; Emacs Config
+;; -- Emacs Config -*- lexical-binding: t -*-
 
 (progn
-  ;; Commonly used options.
+  ;; -- Commonly used options.
   (unless (eq system-type 'darwin)
     ;; show menu bar on macOS, hide menu bar otherwise.
     (menu-bar-mode -1))
@@ -24,7 +23,7 @@
   )
 
 (progn
-  ;; other personalize options
+  ;; -- Other personalize options
   (defvar use-melpa-mirror 'tuna
     "a non-nil value to use a mirror replacing original source.")
   (defvar input-method-enabled nil
@@ -36,8 +35,8 @@
 	    (lambda () (message (emacs-init-time))))
   )
 
-;; Toggle some options.
 (setq
+ ;; -- Toggle some options.
  ;; quoted insert use hex number
  read-quoted-char-radix 16
  ;; don't want a pop-up window.
@@ -85,25 +84,25 @@
   ;; get interrupt with other hotkeys on Windows.
   (keymap-global-set "M-<f1>" #'just-one-space))
 
-(when (display-graphic-p)
+(when (and (display-graphic-p)
+	   (eq system-type 'darwin))
   ;; Replace ring bell with custom bell on macOS
-  (when (eq system-type 'darwin)
-    (defvar ring-bell-lock nil)
-    (setq visible-bell nil)
-    (setq ring-bell-function
-	  (lambda ()
-            (unless ring-bell-lock
-	      (setq ring-bell-lock t)
-	      (let ((current (face-attribute 'mode-line :background))
-		    (flash "#000000")) ;; High contrast color
-		(set-face-attribute 'mode-line nil :background flash)
-		(run-with-idle-timer
-		 0.1
-		 nil
-		 (lambda ()
-		   (set-face-attribute 'mode-line nil
-				       :background current)
-		   (setq ring-bell-lock nil)))))))))
+  (defvar ring-bell-lock nil)
+  (setq visible-bell nil)
+  (setq ring-bell-function
+	(lambda ()
+          (unless ring-bell-lock
+	    (setq ring-bell-lock t)
+	    (let ((current (face-attribute 'mode-line :background))
+		  (flash "#000000")) ;; High contrast color
+	      (set-face-attribute 'mode-line nil :background flash)
+	      (run-with-idle-timer
+	       0.1
+	       nil
+	       (lambda ()
+		 (set-face-attribute 'mode-line nil
+				     :background current)
+		 (setq ring-bell-lock nil))))))))
 
 (when (display-graphic-p)
   ;; Set Font
@@ -201,36 +200,40 @@
     (pyim-basedict-enable))
   (setq default-input-method "pyim"))
 
-(unless (display-graphic-p)
-  ;; Use vim-like keymap on non-gui mode.
-  (unless (package-installed-p 'evil)
-    (package-install 'evil)
-    (require 'evil)
-    (evil-mode)))
 
 (progn
   ;; Config for editing Emacs Lisp.
-  ;; smartparens for emacs lisp and other lisp files.
+  ;; smartparens for semi structure editing.
   (unless (package-installed-p 'smartparens)
     (package-install 'smartparens))
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode)
-  (require 'smartparens-config)
-  ;; `macrostep' show expanded macros.
+  
+  ;; macro expansion feature provided by `macrostep'.
   (unless (package-installed-p 'macrostep)
     (package-install 'macrostep))
-  (define-key emacs-lisp-mode-map (kbd "C-c e") 'macrostep-expand)
+  (keymap-set emacs-lisp-mode-map "C-c e" #'macrostep-expand)
   )
 
 (unless (package-installed-p 'magit)
   ;; Git frontend
   (package-install 'magit))
 
+(unless (display-graphic-p)
+  ;; Use evil mode on text ui.
+  ;; `evil-mode' configurations
+  (unless (package-installed-p 'evil)
+    (package-install 'evil))
+  (add-hook 'after-init-hook #'evil-mode)
+  )
+
 (progn
-  ;; LOAD OTHER CONFIG FILES
-  ;; Support for other languages
-  (load (concat user-emacs-directory "languages") t)
-  ;; Extra packages
-  (load (concat user-emacs-directory "conditional") t)
+  ;; -- LOAD OTHER CONFIG FILES
+  ;; per-package config
+  (load (concat user-emacs-directory "external"))
+  ;; per-language config
+  (load (concat user-emacs-directory "languages"))
+  ;; legacy config
+  (load (concat user-emacs-directory "conditional"))
   ;; Auto-generated config
   (load custom-file t)
   )

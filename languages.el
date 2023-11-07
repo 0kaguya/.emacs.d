@@ -85,21 +85,20 @@ This won't have effect until `update-packages' is called."
 
 (progn
   ;; Racket
-  (package-bind-executable "racket" 'racket-mode)
+  (package-bind-executable "racket" 'racket-mode 'smartparens)
   (when (package-installed-p 'racket-mode)
     (add-hook 'racket-mode-hook #'racket-xp-mode)
-    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable)
-    (cond ((package-installed-p 'smartparens)
-	   (add-hook 'racket-mode-hook #'smartparens-strict-mode))
-	  ('otherwise
-	   (add-hook 'racket-mode-hook #'electric-pair-local-mode)))
-    ))
+    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable))
+  (when (and (package-installed-p 'racket-mode)
+	     (package-installed-p 'smartparens))
+    (add-hook 'racket-mode-hook #'smartparens-strict-mode))
+  )
 
 (progn
   ;; Rust
-  ;; On some distributions, an empty `rust-analyzer' will be installed
-  ;; when rust toolchain / rustup is managed by system package manager.
-  ;; This will cause a language server error. So make sure `rust-analyzer'
+  ;; On some distributions, an empty `rust-analyzer' will be created
+  ;; when rustup is installed by system package manager.
+  ;; This will cause an error on runtime. So make sure `rust-analyzer'
   ;; shawn `installed' in the rustup component list.
   (package-bind-executable '("cargo" "rust-analyzer") 'rust-mode)
   (when (package-installed-p 'rust-mode)
