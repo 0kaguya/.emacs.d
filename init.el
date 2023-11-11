@@ -54,8 +54,8 @@
 		'alpha-background)
 	       ('alpha)))
 	;; change value of `low' for a comfortable opacity
-	(low 70)
-	(high 100))
+	(low 0.7)
+	(high 1.0))
     (defun toggle-transparency ()
       (interactive)
       (letrec ((current (frame-parameter nil alpha))
