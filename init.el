@@ -158,7 +158,9 @@
        '(("gnu"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
 	 ("nongnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
 	 ("melpa"  . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-	 ("org"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/"))))
+	 ;; got problem with this one.
+	 ;("org"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/")
+	 )))
      )
     )
   (when (< emacs-major-version 27)
