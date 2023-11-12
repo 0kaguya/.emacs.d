@@ -19,7 +19,7 @@ some language is added or removed."
 		     (package-install package)))
 		  ('otherwise
 		   (when (package-installed-p package)
-		     (package-delete package)))))
+		     (package-delete (package-get-descriptor package))))))
 	  all-packages)
     )
   (defun package-bind-executable (executables &rest packages)
@@ -85,20 +85,20 @@ This won't have effect until `update-packages' is called."
 
 (progn
   ;; Racket
-  (package-bind-executable "racket" 'racket-mode 'smartparens)
+  (package-bind-executable "racket" 'racket-mode)
   (when (package-installed-p 'racket-mode)
     (add-hook 'racket-mode-hook #'racket-xp-mode)
-    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable))
-  (when (and (package-installed-p 'racket-mode)
-	     (package-installed-p 'smartparens))
-    (add-hook 'racket-mode-hook #'smartparens-strict-mode))
+    (add-hook 'racket-mode-hook #'racket-unicode-input-method-enable)
+    (cond ((package-installed-p 'smartparens)
+	   (add-hook 'racket-mode-hook #'smartparens-strict-mode))
+	  ((add-hook 'racket-mode-hook #'electric-pair-local-mode))))
   )
 
 (progn
   ;; Rust
   ;; On some distributions, an empty `rust-analyzer' will be created
   ;; when rustup is installed by system package manager.
-  ;; This will cause an error on runtime. So make sure `rust-analyzer'
+  ;; This will cause an error at runtime. So make sure `rust-analyzer'
   ;; shawn `installed' in the rustup component list.
   (package-bind-executable '("cargo" "rust-analyzer") 'rust-mode)
   (when (package-installed-p 'rust-mode)
@@ -106,12 +106,12 @@ This won't have effect until `update-packages' is called."
     (add-hook 'rust-mode-hook #'eglot-ensure))
   ;; (defun rustup-install-rust-analyzer ()
   ;;   (let ((buffer (generate-new-buffer "Rustup Output")))
-  ;; 	  (shell-command "rustup component list" buffer)
-  ;; 	  (when (with-current-buffer buffer
-  ;; 		  (goto-char (point-min))
-  ;; 		  (re-search-forward "^rust-analyzer-[^ ]* (installed)" nil t))
-  ;; 	    (shell-command "rustup component add rust-analyzer" buffer))
-  ;; 	  (kill-buffer buffer)))
+  ;;	  (shell-command "rustup component list" buffer)
+  ;;	  (when (with-current-buffer buffer
+  ;;		  (goto-char (point-min))
+  ;;		  (re-search-forward "^rust-analyzer-[^ ]* (installed)" nil t))
+  ;;	    (shell-command "rustup component add rust-analyzer" buffer))
+  ;;	  (kill-buffer buffer)))
   )
 
 (progn
