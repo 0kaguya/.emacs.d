@@ -203,3 +203,7 @@ This won't have effect until `update-packages' is called."
 	     (treesit-language-available-p 'c))
     (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
     (add-hook 'c-ts-mode-hook (lambda () (run-hooks 'c-mode-hook)))))
+
+(unless (package-installed-p 'yaml-mode)
+  ;; YAML
+  (package-install 'yaml-mode))
