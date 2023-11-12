@@ -127,6 +127,10 @@
   "Set frame size"
   ;; (set-frame-position (selected-frame) 100 100)
   ;; (set-frame-size (selected-frame) 100 30)
+  (when (and (eq system-type 'gnu/linux)
+	     (eq (window-system) 'pgtk))
+    ;; sometimes they aren't smart enough.
+    (set-frame-size (selected-frame) 80 25))
   )
 
 
