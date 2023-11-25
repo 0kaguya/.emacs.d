@@ -207,3 +207,6 @@ This won't have effect until `update-packages' is called."
 (unless (package-installed-p 'yaml-mode)
   ;; YAML
   (package-install 'yaml-mode))
+
+;; Coq
+(package-bind-executable '("coqtop" "coqc" "coqdep") 'proof-general)
