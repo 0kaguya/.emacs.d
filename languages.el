@@ -216,3 +216,6 @@ This won't have effect until `update-packages' is called."
 ;  ... how about enable global electric pair mode?
 ;      or, globally smartparens mode?
 (add-hook 'latex-mode-hook #'electric-pair-local-mode)
+
+;; Swift
+(package-bind-executable "swift" 'swift-mode)
