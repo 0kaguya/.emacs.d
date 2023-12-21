@@ -91,7 +91,7 @@
   (setq visible-bell nil)
   (setq ring-bell-function
 	(lambda ()
-          (unless ring-bell-lock
+	  (unless ring-bell-lock
 	    (setq ring-bell-lock t)
 	    (let ((current (face-attribute 'mode-line :background))
 		  (flash "#000000")) ;; High contrast color
@@ -117,11 +117,11 @@
 			     :family "Sarasa Mono SC" :foundry "outline"
 			     :slant 'normal :weight 'normal
 			     :height 110 :width 'normal))
+
 	('otherwise
-	 (set-face-attribute 'default nil
-			     :family "Sarasa Term SC" :foundry "outline"
-			     :slant 'normal :weight 'normal
-			     :height 160 :width 'normal))))
+	 ;; I don't know why, but monospacing only works at size=20.
+	 (set-face-font 'default "Sarasa Mono SC:size=20"))
+	))
 
 (when (display-graphic-p)
   "Set frame size"
@@ -179,7 +179,7 @@
 ;; set no proxy for elpa mirror.
 ;; (with-eval-after-load 'url-vars
 ;;   (add-to-list 'url-proxy-services
-;; 	       '("no_proxy" . "[^.]*\\.tuna\\.tsinghua\\.edu\\.cn")))
+;;	       '("no_proxy" . "[^.]*\\.tuna\\.tsinghua\\.edu\\.cn")))
 
 (unless (memq system-type '(ms-dos windows-nt))
   ;; Use `exec-path-from-shell' to load shell PATH
@@ -213,7 +213,7 @@
   (unless (package-installed-p 'smartparens)
     (package-install 'smartparens))
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode)
-  
+
   ;; macro expansion feature provided by `macrostep'.
   (unless (package-installed-p 'macrostep)
     (package-install 'macrostep))
