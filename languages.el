@@ -99,8 +99,8 @@ This won't have effect until `update-packages' is called."
   ;; On some distributions, an empty `rust-analyzer' will be created
   ;; when rustup is installed by system package manager.
   ;; This will cause an error at runtime. So make sure `rust-analyzer'
-  ;; shawn `installed' in the rustup component list.
-  (package-bind-executable '("cargo" "rust-analyzer") 'rust-mode)
+  ;; is marked with `installed' in the rustup component list.
+  (package-bind-executable '("cargo" "rust-analyzer") 'rustic)
   (when (package-installed-p 'rust-mode)
     (add-hook 'rust-mode-hook #'flymake-mode)
     (add-hook 'rust-mode-hook #'eglot-ensure)
@@ -113,6 +113,10 @@ This won't have effect until `update-packages' is called."
   ;;		  (re-search-forward "^rust-analyzer-[^ ]* (installed)" nil t))
   ;;	    (shell-command "rustup component add rust-analyzer" buffer))
   ;;	  (kill-buffer buffer)))
+  (when (package-installed-p 'rustic)
+    (setq rustic-lsp-client 'eglot)
+    (add-hook 'eglot--managed-mode-hook (lambda () (flymake-mode -1)))
+    )
   )
 
 (progn
@@ -219,3 +223,9 @@ This won't have effect until `update-packages' is called."
 
 ;; Swift
 (package-bind-executable "swift" 'swift-mode)
+
+;; Clojure
+(package-bind-executable "clojure" 'clojure-mode 'cider)
+(when (package-installed-p 'clojure-mode)
+  (when (package-installed-p 'smartparens)
+    (add-hook 'clojure-mode-hook #'smartparens-strict-mode)))
