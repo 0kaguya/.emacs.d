@@ -229,3 +229,6 @@ This won't have effect until `update-packages' is called."
 (when (package-installed-p 'clojure-mode)
   (when (package-installed-p 'smartparens)
     (add-hook 'clojure-mode-hook #'smartparens-strict-mode)))
+
+;; Scala
+(package-bind-executable "scala" 'scala-mode)
