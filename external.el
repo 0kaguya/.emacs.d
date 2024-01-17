@@ -1,5 +1,7 @@
 ;; --  -*- lexical-binding: t -*-
 (with-eval-after-load 'evil
+  ;; use M-m as escape key to avoid that big problem.
+  (keymap-global-set "M-m" "<escape>")
   ;; when evil enabled, use `evil-smartparens' with smartparens.
   (with-eval-after-load 'smartparens    
     (unless (package-installed-p 'evil-smartparens)
