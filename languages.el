@@ -231,4 +231,19 @@ This won't have effect until `update-packages' is called."
     (add-hook 'clojure-mode-hook #'smartparens-strict-mode)))
 
 ;; Scala
-(package-bind-executable "scala" 'scala-mode)
+(package-bind-executable "scala" 'scala-ts-mode)
+(when (package-installed-p 'scala-ts-mode)
+  (unless (treesit-language-available-p 'scala)
+    (add-to-list
+     'treesit-language-source-alist
+     (assoc 'scala
+	    '("https://github.com/tree-sitter/tree-sitter-scala.git")))
+    (treesit-install-language-grammar 'scala))
+  (add-hook 'scala-ts-mode-hook #'electric-pair-local-mode))
+
+;; F♯
+(package-bind-executable "dotnet" 'fsharp-mode 'eglot-fsharp)
+(with-eval-after-load 'fsharp-mode
+  (require 'eglot-fsharp)
+  (setq inferior-fsharp-program "dotnet fsi --readline-")
+  (add-hook 'fsharp-mode-hook #'eglot-ensure))

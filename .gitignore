@@ -19,3 +19,6 @@ racket-mode/
 projects
 tree-sitter/
 games/
+
+# fsharp language server
+FsAutoComplete/
