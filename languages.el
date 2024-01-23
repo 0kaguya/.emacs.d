@@ -24,7 +24,7 @@ some language is added or removed."
     )
   (defun package-bind-executable (executables &rest packages)
     "Assign `packages' to track some `executables' in PATH.
-This won't have effect until `update-packages' is called."
+This won't have any effect until `update-packages' is called."
     (add-hook
      'update-packages-functions
      (lambda (all-executables)
@@ -40,9 +40,6 @@ This won't have effect until `update-packages' is called."
 	 (setq active-packages (append packages active-packages)))
        ))
     ))
-
-(with-eval-after-load 'eglot
-  (keymap-set eglot-mode-map "S-<f6>" #'eglot-rename))
 
 (let
     ;; Typescript and TSX
@@ -121,10 +118,11 @@ This won't have effect until `update-packages' is called."
 
 (progn
   ;; Haskell
-  (package-bind-executable "ghc" 'haskell-mode 'hindent)
-  (when (and (package-installed-p 'haskell-mode)
-	     (package-installed-p 'hindent))
-    (add-hook 'haskell-mode-hook #'hindent-mode)))
+  (package-bind-executable "haskell-language-server" 'haskell-mode)
+  (package-bind-executable "haskell-language-server-wrapper" 'haskell-mode)
+  (when (package-installed-p 'haskell-mode)
+    (add-hook 'haskell-mode-hook #'eglot-ensure)
+    (add-hook 'haskell-mode-hook #'electric-pair-local-mode)))
 
 (progn
   ;; Javascript and JSX
@@ -241,9 +239,14 @@ This won't have effect until `update-packages' is called."
     (treesit-install-language-grammar 'scala))
   (add-hook 'scala-ts-mode-hook #'electric-pair-local-mode))
 
-;; F♯
-(package-bind-executable "dotnet" 'fsharp-mode 'eglot-fsharp)
+;; F♯ (fsharp, F#)
+(package-bind-executable "dotnet"
+			 'fsharp-mode
+			 'eglot-fsharp
+			 'highlight-indentation)
 (with-eval-after-load 'fsharp-mode
   (require 'eglot-fsharp)
   (setq inferior-fsharp-program "dotnet fsi --readline-")
-  (add-hook 'fsharp-mode-hook #'eglot-ensure))
+  (add-hook 'fsharp-mode-hook #'eglot-ensure)
+  (add-hook 'fsharp-mode-hook #'highlight-indentation-mode)
+  (add-hook 'fsharp-mode-hook #'electric-pair-local-mode))
