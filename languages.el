@@ -1,84 +1,49 @@
 ;; -*- lexical-binding: t -*-
 (require 'cl-macs)
+(load (concat user-emacs-directory "package-management"))
 
-(let ((all-packages '())
-      (active-packages '())
-      (update-packages-functions '()))
-  (defun update-packages ()
-    "Alter packages according to executables found in PATH.
-Run `update-packages' manually when the development toolchain for
-some language is added or removed."
-    (interactive)
-    (run-hook-with-args
-     'update-packages-functions
-     (mapcan #'directory-files
-	     (seq-filter #'file-exists-p exec-path)))
-    (mapc (lambda (package)
-	    (cond ((memq package active-packages)
-		   (unless (package-installed-p package)
-		     (package-install package)))
-		  ('otherwise
-		   (when (package-installed-p package)
-		     (package-delete (package-get-descriptor package))))))
-	  all-packages)
-    )
-  (defun package-bind-executable (executables &rest packages)
-    "Assign `packages' to track some `executables' in PATH.
-This won't have any effect until `update-packages' is called."
-    (add-hook
-     'update-packages-functions
-     (lambda (all-executables)
-       (mapc (lambda (package)
-		 (unless (memq package all-packages)
-		   (setq all-packages (cons package all-packages))))
-	     packages)
-       (when (seq-every-p
-	      (lambda (executable)
-		(seq-some (lambda (s) (string-equal s executable))
-			  all-executables))
-	      (ensure-list executables))
-	 (setq active-packages (append packages active-packages)))
-       ))
-    ))
+;; Emacs Lisp (elisp)
+(package-bind-executable "emacs" 'smartparens 'macrostep)
+(when (package-installed-p 'macrostep)
+  (keymap-set emacs-lisp-mode-map "C-c e" #'macrostep-expand))
+(when (package-installed-p 'smartparens)
+  (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode))
 
-(let
-    ;; Typescript and TSX
-    ((setup-typescript
-      (lambda (&rest minor-modes)
-	"major mode dispatcher"
-	(cond ((and (>= emacs-major-version 29)
-		    (treesit-available-p)
-		    (treesit-language-available-p 'typescript))
-	       (add-to-list 'auto-mode-alist
-			    '("\\.ts\\'" . typescript-ts-mode))
-	       (mapc (lambda (f) (add-hook 'typescript-ts-mode-hook f))
-		     minor-modes)
-	       (when (treesit-language-available-p 'tsx)
-		 (add-to-list 'auto-mode-alist
-			      '("\\.tsx\\'" . tsx-ts-mode))
-		 (mapc (lambda (f) (add-hook 'tsx-ts-mode f))
-		       minor-modes)))))))
-  (package-bind-executable "tsserver" 'tide)
-  (when (package-installed-p 'tide)
-    (with-eval-after-load 'tide
-      (setq
-       tide-format-options
-       '( :insertSpaceAfterFunctionKeywordForAnoymousFunctions t
-	  :placeOpenBraceOnNewLineForFunctions nil
-	  )))
-    (funcall setup-typescript
-	     #'tide-setup
-	     #'flymake-mode
-	     #'eldoc-mode
-	     #'electric-pair-local-mode
-	     )))
+;; Typescript
 
-(progn
-  ;; Julia
-  (package-bind-executable "julia" 'julia-mode 'julia-repl 'ein)
-  (when (and (package-installed-p 'julia-mode)
-	     (package-installed-p 'julia-repl))
-    (add-hook 'julia-mode-hook #'julia-repl-mode)))
+;; fetch and install tree-sitter grammar if needed.
+(unless (treesit-language-available-p 'typescript)
+  (add-to-list 'treesit-language-source-alist
+	       '(typescript
+		 "https://github.com/tree-sitter/tree-sitter-typescript"
+		 nil
+		 "typescript/src"))
+  (treesit-install-language-grammar 'typescript))
+(unless (treesit-language-available-p 'tsx)
+  (add-to-list 'treesit-language-source-alist
+	       '(tsx
+		 "https://github.com/tree-sitter/tree-sitter-typescript"
+		 nil
+		 "tsx/src"))
+  (treesit-install-language-grammar 'tsx))
+;; setup tree-sitter major-mode.
+(add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . tsx-ts-mode))
+(dolist (hook '(typescript-ts-mode-hook
+		tsx-ts-mode-hook))
+  (dolist (f '(electric-pair-local-mode
+	       eglot-ensure))
+    (add-hook hook f)))
+
+;; (when (package-installed-p 'tide)
+;;   (add-hook 'typescript-ts-mode-hook #'tide-setup)
+;;   (add-hook 'tsx-ts-mode-hook #'tide-setup)
+;;   (add-hook 'tide-mode-hook #'electric-pair-local-mode))
+
+;; Julia
+(package-bind-executable "julia" 'julia-mode 'julia-repl 'ein)
+(when (package-installed-p 'julia-mode)
+  (add-hook 'julia-mode-hook #'julia-repl-mode))
 
 (progn
   ;; Racket
@@ -93,36 +58,75 @@ This won't have any effect until `update-packages' is called."
 
 (progn
   ;; Rust
-  ;; On some distributions, an empty `rust-analyzer' will be created
-  ;; when rustup is installed by system package manager.
-  ;; This will cause an error at runtime. So make sure `rust-analyzer'
-  ;; is marked with `installed' in the rustup component list.
-  (package-bind-executable '("cargo" "rust-analyzer") 'rustic)
-  (when (package-installed-p 'rust-mode)
-    (add-hook 'rust-mode-hook #'flymake-mode)
-    (add-hook 'rust-mode-hook #'eglot-ensure)
-    (add-hook 'rust-mode-hook #'electric-pair-local-mode))
-  ;; (defun rustup-install-rust-analyzer ()
-  ;;   (let ((buffer (generate-new-buffer "Rustup Output")))
-  ;;	  (shell-command "rustup component list" buffer)
-  ;;	  (when (with-current-buffer buffer
-  ;;		  (goto-char (point-min))
-  ;;		  (re-search-forward "^rust-analyzer-[^ ]* (installed)" nil t))
-  ;;	    (shell-command "rustup component add rust-analyzer" buffer))
-  ;;	  (kill-buffer buffer)))
-  (when (package-installed-p 'rustic)
-    (setq rustic-lsp-client 'eglot)
-    (add-hook 'eglot--managed-mode-hook (lambda () (flymake-mode -1)))
-    )
-  )
+
+  (with-eval-after-load 'treesit
+    (add-to-list
+     'treesit-language-source-alist
+     '(rust . ("https://github.com/tree-sitter/tree-sitter-rust.git"))))
+
+  (with-eval-after-load 'rust-ts-mode
+    ;; use short tab width
+    (setq rust-ts-mode-indent-offset 2))
+
+  (dolist (f '(eglot-ensure
+	       smartparens-mode
+	       ))
+    (add-hook 'rust-ts-mode-hook f))
+
+  ;; hotfix
+  (with-eval-after-load 'smartparens-rust
+    (dolist (open '("<" "{" "[" "("))
+      (sp-local-pair '(rust-mode rust-ts-mode rustic-mode)
+		     open nil :post-handlers '(:add ("||\n[i]" "RET")))))
+
+  (defun rust-install-components ()
+    ;; Install required rust components.
+    (let ((components '("rust-analyzer" "rustfmt" "clippy")))
+      (apply #'start-process "Rustup" "Rustup Output"
+	     "rustup" "component" "add" components)))
+
+  (defun rust-ts-install-grammar ()
+    ;; Install tree sitter grammar if not exist.
+    ;; To install a tree sitter grammar Git and C/C++ compiler is needed.
+    (unless (treesit-language-available-p 'rust)
+      (treesit-install-language-grammar 'rust)))
+
+  (package-bind-executable
+   '("rustup" "cargo")
+   '(rust-components . rust-install-components)
+   '(rust-ts-grammar . rust-ts-install-grammar)
+   'cargo)
+
+  (package-bind-executable "__blacklisted"
+			   'rust-mode
+			   'rustic)
+  
+  (when (package-installed-p 'cargo)
+    (add-hook 'rust-ts-mode-hook #'cargo-minor-mode))
+  (with-eval-after-load 'cargo
+    (keymap-set cargo-mode-map "C-c" cargo-minor-mode-command-map))
+
+  (add-to-list 'auto-mode-alist '("\\.rs\\'" . rust-ts-mode))
+
+  (defun rust-beginning-of-defun ()
+    ;; Used for seeking test function's name.
+    ;; Let's do it simple: we just search for the `#[test]' tag; it's user's
+    ;; mistake when they invoke this test from elsewhere anyway.
+    (re-search-backward "^ *#\\[\\([a-z_]+::\\)?test]")        
+    (forward-word 2))
+
+  ) ;; Rust config
 
 (progn
   ;; Haskell
-  (package-bind-executable "haskell-language-server" 'haskell-mode)
-  (package-bind-executable "haskell-language-server-wrapper" 'haskell-mode)
+  (dolist (exec '("haskell-language-server"
+		  "haskell-language-server-wrapper"))
+    (package-bind-executable exec 'haskell-mode))
+
   (when (package-installed-p 'haskell-mode)
-    (add-hook 'haskell-mode-hook #'eglot-ensure)
-    (add-hook 'haskell-mode-hook #'electric-pair-local-mode)))
+    (dolist (f '(eglot-ensure
+		 electric-pair-local-mode))
+      (add-hook 'haskell-mode-hook f))))
 
 (progn
   ;; Javascript and JSX
@@ -134,12 +138,41 @@ This won't have any effect until `update-packages' is called."
   (with-eval-after-load 'js
     (setq js-indent-level 2)))
 
+(progn
+  ;; JSON
+  
+  (add-to-list 'auto-mode-alist
+	     '("\\.json\\'" . json-ts-mode))
+  
+  (with-eval-after-load 'treesit
+    (add-to-list
+     'treesit-language-source-alist
+     '(json . ("https://github.com/tree-sitter/tree-sitter-json"))))
+  
+  (with-eval-after-load 'json-ts-mode
+    (unless (treesit-language-available-p 'json)
+      (treesit-install-language-grammar 'json)))
+
+  (defun json-set-indent ()
+    (setq-local js-indent-level 4))
+
+  (dolist (f '(json-set-indent
+	       electric-pair-local-mode))
+    (add-hook 'json-ts-mode-hook f)))
+
+;; HTML/XML/CSS/etc
+(unless (package-installed-p 'web-mode)
+  (package-install 'web-mode))
+(add-to-list 'auto-mode-alist '("\\.html\\'" . web-mode))
+(add-to-list 'auto-mode-alist '("\\.css\\'" . web-mode))
+
 (with-eval-after-load 'mixal-mode
   ;; Knuth's MIXAL
   (load "/usr/share/mdk/mixvm.el" t)
   )
 
 (progn
+  ;; competitive programming
   (defun term-run (command)
     "run a shell command in a new window."
     (when (eq (next-window) (selected-window))
@@ -175,27 +208,27 @@ This won't have any effect until `update-packages' is called."
 			(when (file-exists-p input)
 			  (concat " < " input))))))
   (let ((major-mode-hook
-	   ;; select major mode
-	   (cond ((and (treesit-available-p)
-		       (treesit-language-available-p 'c++))
-		  ;; use tree sitter mode when available
-		  (add-to-list 'major-mode-remap-alist
-			       '(c++-mode . c++-ts-mode))
-		  'c++-ts-mode-hook)
-		 ('c++-mode-hook))))
-      ;; add hook to major mode
-      (add-hook major-mode-hook #'electric-pair-local-mode)
-      (add-hook major-mode-hook (lambda ()
-				  (keymap-local-set "C-c C-c" #'c++-compile)
-				  (keymap-local-set "C-c C-r" #'c++-run))))
+	 ;; select major mode
+	 (cond ((and (treesit-available-p)
+		     (treesit-language-available-p 'c++))
+		;; use tree sitter mode when available
+		(add-to-list 'major-mode-remap-alist
+			     '(c++-mode . c++-ts-mode))
+		'c++-ts-mode-hook)
+	       ('c++-mode-hook))))
+    ;; add hook to major mode
+    (add-hook major-mode-hook #'electric-pair-local-mode)
+    (add-hook major-mode-hook (lambda ()
+				(keymap-local-set "C-c C-c" #'c++-compile)
+				(keymap-local-set "C-c C-r" #'c++-run))))
   (add-hook 'text-mode-hook
-	      (lambda ()
-		(when (string= (file-name-nondirectory (buffer-file-name))
-			       "in.txt")
-		  ;; also bind keys for the `in.txt' file.
-		  (keymap-local-set "C-c C-c" #'c++-compile)
-		  (keymap-local-set "C-c C-r" #'c++-run)
-				  ))))
+	    (lambda ()
+	      (when (string= (file-name-nondirectory (buffer-file-name))
+			     "in.txt")
+		;; also bind keys for the `in.txt' file.
+		(keymap-local-set "C-c C-c" #'c++-compile)
+		(keymap-local-set "C-c C-r" #'c++-run)
+		))))
 
 (progn
   ;; C
@@ -207,6 +240,12 @@ This won't have any effect until `update-packages' is called."
     (add-to-list 'major-mode-remap-alist '(c-mode . c-ts-mode))
     (add-hook 'c-ts-mode-hook (lambda () (run-hooks 'c-mode-hook)))))
 
+
+;; Java
+(when (treesit-language-available-p 'java)
+  (add-to-list 'major-mode-remap-alist '(java-mode . java-ts-mode)))
+
+
 (unless (package-installed-p 'yaml-mode)
   ;; YAML
   (package-install 'yaml-mode))
@@ -215,8 +254,8 @@ This won't have any effect until `update-packages' is called."
 (package-bind-executable '("coqtop" "coqc" "coqdep") 'proof-general)
 
 ;; LaTeX
-;  ... how about enable global electric pair mode?
-;      or, globally smartparens mode?
+					;  ... how about enable global electric pair mode?
+					;      or, globally smartparens mode?
 (add-hook 'latex-mode-hook #'electric-pair-local-mode)
 
 ;; Swift
@@ -234,8 +273,7 @@ This won't have any effect until `update-packages' is called."
   (unless (treesit-language-available-p 'scala)
     (add-to-list
      'treesit-language-source-alist
-     (assoc 'scala
-	    '("https://github.com/tree-sitter/tree-sitter-scala.git")))
+     '(scala . ("https://github.com/tree-sitter/tree-sitter-scala.git")))
     (treesit-install-language-grammar 'scala))
   (add-hook 'scala-ts-mode-hook #'electric-pair-local-mode))
 
@@ -244,9 +282,39 @@ This won't have any effect until `update-packages' is called."
 			 'fsharp-mode
 			 'eglot-fsharp
 			 'highlight-indentation)
-(with-eval-after-load 'fsharp-mode
-  (require 'eglot-fsharp)
-  (setq inferior-fsharp-program "dotnet fsi --readline-")
+(when (package-installed-p 'fsharp-mode)
   (add-hook 'fsharp-mode-hook #'eglot-ensure)
   (add-hook 'fsharp-mode-hook #'highlight-indentation-mode)
-  (add-hook 'fsharp-mode-hook #'electric-pair-local-mode))
+  (add-hook 'fsharp-mode-hook #'electric-pair-local-mode)
+  (add-to-list 'auto-mode-alist '("\\.fsproj\\'" . xml-mode) 'append)
+  (with-eval-after-load 'fsharp-mode
+    (require 'eglot-fsharp)
+    (setq inferior-fsharp-program "dotnet fsi --readline-"))
+  )
+
+;; Lean
+(package-bind-executable
+ "lean"
+ '(lean4-mode . (lambda ()
+		  (package-vc-install
+		   '(lean4-mode
+		     :url "https://github.com/leanprover/lean4-mode.git")))))
+(with-eval-after-load 'lsp-mode
+  (add-to-list 'lsp-file-watch-ignored-directories
+	       "[/\\\\]\\.lake\\'"))
+(add-hook 'lean4-mode-hook #'electric-pair-local-mode)
+
+;; gPRC's Protobuf
+(package-bind-executable "protoc" 'protobuf-mode)
+
+;; erlang
+(progn
+  (package-bind-executable "__blocklisted" 'edts)
+  
+  (when (and
+	 ;; `erlang.el' is bundled with erlang toolchain.
+	 (package-installed-p 'erlang)
+	 ;; `eglot' is default configured to `erlang_ls'.
+	 (executable-exists-p "erlang_ls"))
+    (add-hook 'erlang-mode-hook #'eglot-ensure))
+  )

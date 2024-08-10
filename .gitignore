@@ -3,18 +3,26 @@
 .cask
 *~
 *.~undo-tree
+
 # emacs
 auto-save-list/
 elpa/
 custom.el
+
 # https connection data
 network-security.data
 transient/
 eln-cache
+
+# eshell history etc.
+eshell/
+
 # IM cache
 pyim/
 
+# `racket-mode' files
 racket-mode/
+
 # LSP
 projects
 tree-sitter/

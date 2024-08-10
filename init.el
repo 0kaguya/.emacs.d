@@ -3,7 +3,7 @@
 (progn
   ;; -- Commonly used options.
   (unless (eq system-type 'darwin)
-    ;; show menu bar on macOS, hide menu bar otherwise.
+    ;; show menu bar on macOS, hide it otherwise.
     (menu-bar-mode -1))
   ;; Prohibit some widgets for a clean appearance.
   (tool-bar-mode -1)
@@ -20,6 +20,12 @@
   (column-number-mode)
   ;; Automatic generated settings are at somewhere else.
   (setq custom-file (concat user-emacs-directory "custom.el"))
+  ;; Sync when file on disk changed
+  (global-auto-revert-mode)
+  ;; Always wrap lines
+  (global-visual-line-mode)
+  ;; see chapter `VC Workfile Handling'
+  (setq vc-follow-symlinks t)
   )
 
 (progn
@@ -46,11 +52,17 @@
 ;; Define functions that might not be defined in earlier Emacs versions.
 (load (concat user-emacs-directory "compatibility"))
 
+;;
+;; Keymap Settings
+;;
+
+;; disable middle click yanking
+(keymap-global-unset "<mouse-2>")
+
 (when (display-graphic-p)
   ;; Defines and binds `toggle-transparency' feature
   (let ((alpha
-	 (cond ((and (>= emacs-major-version 29)
-		     (eq (framep (selected-frame)) 'pgtk))
+	 (cond ((eq (framep (selected-frame)) 'pgtk)
 		'alpha-background)
 	       ('alpha)))
 	;; change value of `low' for a comfortable opacity
@@ -63,7 +75,10 @@
 			   ((eql high current) low)
 			   ((eql low current) high)
 			   ('otherwise high))))
-	(set-frame-parameter nil alpha next))))
+	(set-frame-parameter nil alpha next)))
+    (defun set-transprarency (opacity)
+      (interactive "nOpacity Level: ")
+      (setq low opacity)))
   ;; binds it to F12
   (keymap-global-set "<f12>" #'toggle-transparency))
 
@@ -106,7 +121,7 @@
 
 (when (display-graphic-p)
   ;; Set Font
-  ;; TODO: adjust font size by DPI
+  ;; TODO: adjust font size by PPI
   (cond ((eq system-type 'darwin)
 	 (set-face-attribute 'default nil
 			     :family "Monaco" :foundry "outline"
@@ -118,8 +133,9 @@
 			     :slant 'normal :weight 'normal
 			     :height 110 :width 'normal))
 
-	('otherwise
-	 ;; I don't know why, but monospacing only works at size=20.
+	('otherwise         
+	 ;; I don't know why, but for this font, CJK characters only renders
+	 ;; correctly at size=20 on Linux.
 	 (set-face-font 'default "Sarasa Mono SC:size=20"))
 	))
 
@@ -142,38 +158,43 @@
 
 (progn
   ;; Package Manager Settings.
+
+  ;; manually load is required before Emacs 27.
   (when (< emacs-major-version 27)
-    ;; load package manager for version beforce Emacs 27.
     (require 'package))
+  ;; adding elpa sources
   (with-eval-after-load 'package
     (add-to-list
      'package-archives '("melpa" . "https://melpa.org/packages/") t)
     (add-to-list
      'package-archives '("org"   . "https://orgmode.org/elpa/") t)
+    ;; enable mirror site on preference.
     (cond
      ((eq use-melpa-mirror 'tuna)
-      ;; https://mirrors.tuna.tsinghua.edu.cn
       (setq
        package-archives
-       '(("gnu"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-	 ("nongnu" . "http://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
-	 ("melpa"  . "http://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-	 ;; got problem with this one.
-	 ;("org"    . "http://mirrors.tuna.tsinghua.edu.cn/elpa/org/")
+       '(("gnu"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+	 ("nongnu" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/nongnu/")
+	 ("melpa"  . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+	 ;; commented out: got problem with this one.
+	 ;("org"    . "https://mirrors.tuna.tsinghua.edu.cn/elpa/org/")
 	 )))
      )
     )
+  ;; manually initialize is required before Emacs 27.
   (when (< emacs-major-version 27)
-    ;; initialize package manager for version before Emacs 27.
     (package-initialize))
-  (cond ((file-exists-p package-user-dir)
-	 ;; refresh package list when Emacs is idle.
-	 (run-with-idle-timer
-	  30
-	  nil
-	  #'package-refresh-contents))
-	;; fetch package list immediately when it's not present.
-	((package-refresh-contents)))
+  ;; refresh package list at following condition:
+  (cl-labels ((refresh ()
+		;; wrap up the original function for
+		;; turning on the asynchronous feature.
+		(package-refresh-contents t)))
+    (cond ((file-exists-p package-user-dir)
+	   ;; ...when Emacs is idle for `60' seconds;
+	   (run-with-idle-timer 60 nil #'refresh))
+	  ;; ...when there is not a package list.
+	  ((refresh))))
+  
   )
 
 ;; set no proxy for elpa mirror.
@@ -213,10 +234,7 @@
   (unless (package-installed-p 'smartparens)
     (package-install 'smartparens))
   (add-hook 'emacs-lisp-mode-hook #'smartparens-strict-mode)
-
-  ;; macro expansion feature provided by `macrostep'.
-  (unless (package-installed-p 'macrostep)
-    (package-install 'macrostep))
+  
   (keymap-set emacs-lisp-mode-map "C-c e" #'macrostep-expand)
   )
 
@@ -230,7 +248,13 @@
   (unless (package-installed-p 'evil)
     (package-install 'evil))
   (add-hook 'after-init-hook #'evil-mode)
+  ;; Use `xterm-mouse-mode' for terminal mouse support.
+  (xterm-mouse-mode)
   )
+
+;; when want an 80-column indicator
+(setq-default fill-column 80)
+(keymap-global-set "C-c |" #'display-fill-column-indicator-mode)
 
 (progn
   ;; -- LOAD OTHER CONFIG FILES
